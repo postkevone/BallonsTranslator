@@ -146,9 +146,12 @@ class FontSizeBox(QFrame):
         self.downBtn.clicked.connect(self.onDownBtnClicked)
         self.fcombobox = SizeComboBox([1, 1000], 'font_size', self)
         self.fcombobox.addItems([
-            "5", "5.5", "6.5", "7.5", "8", "9", "10", "10.5",
-            "11", "12", "14", "16", "18", "20", '22', "26", "28",
-            "36", "48", "56", "72", "93", "123", "163"
+            "10", "12", "14", "16", "18",
+            "20", "22", "24", "26", "28",
+            "30", "32", "34", "36", "38",
+            "40", "42", "44", "46", "48",
+            "50", "55", "60", "65", "70",
+            "75", "80", "85", "90", "95"
         ])
         self.fcombobox.param_changed.connect(self.param_changed)
 
