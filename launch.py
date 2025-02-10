@@ -9,6 +9,9 @@ import subprocess
 import pkg_resources
 from platform import platform
 
+import nltk # needed for pyphen
+nltk.download('wordnet')
+
 BRANCH = 'dev'
 VERSION = '1.4.0'
 
