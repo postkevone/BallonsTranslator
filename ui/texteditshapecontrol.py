@@ -27,19 +27,21 @@ class ControlBlockItem(QGraphicsRectItem):
         self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
         self.updateEdgeWidth(CBEDGE_WIDTH)
     
-    def updateEdgeWidth(self, edge_width: float):
-        self.edge_width = edge_width
-        self.visible_len = self.edge_width // 2
-        self.pen_width = edge_width / CBEDGE_WIDTH * 2 
-        offset = self.edge_width // 4 + self.pen_width / 2
+    # make the resizing anchors smaller
+    def updateEdgeWidth(self, edge_width: float, scale_factor=0.8):
+        self.edge_width = edge_width * scale_factor
+        self.visible_len = self.edge_width // 2 * scale_factor
+        self.pen_width = edge_width / CBEDGE_WIDTH * 2 * scale_factor
+        offset = self.edge_width // 4 + self.pen_width / 2 * scale_factor
         self.visible_rect = QRectF(offset, offset, self.visible_len, self.visible_len)
         self.setRect(0, 0, self.edge_width, self.edge_width)
 
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget) -> None:
         rect = QRectF(self.visible_rect)
         rect.setTopLeft(self.boundingRect().topLeft()+rect.topLeft())
-        painter.setPen(QPen(QColor(75, 75, 75), self.pen_width, Qt.PenStyle.SolidLine, Qt.SquareCap))
-        painter.fillRect(rect, QColor(200, 200, 200, 125))
+        # change the opacity levels of the square used to resize a text box
+        painter.setPen(QPen(QColor(75, 75, 75, 125), self.pen_width, Qt.PenStyle.SolidLine, Qt.SquareCap))
+        painter.fillRect(rect, QColor(200, 200, 200, 0))
         painter.drawRect(rect)
 
     def hoverEnterEvent(self, event: QGraphicsSceneHoverEvent) -> None:        
@@ -272,8 +274,10 @@ class TextBlkShapeControl(QGraphicsRectItem):
             self.blk_item.endEdit()
 
     def paint(self, painter: QPainter, option: 'QStyleOptionGraphicsItem', widget = ...) -> None:
-        painter.setCompositionMode(QPainter.CompositionMode.RasterOp_NotDestination)
-        super().paint(painter, option, widget)
+        # remove the dashed border of the text element when hovered
+        # painter.setCompositionMode(QPainter.CompositionMode.RasterOp_NotDestination)
+        # super().paint(painter, option, widget)
+        pass
 
     def hideControls(self):
         for ctrl in self.ctrlblock_group:

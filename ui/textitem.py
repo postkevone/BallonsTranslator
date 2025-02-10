@@ -15,9 +15,9 @@ from .misc import td_pattern, table_pattern
 from .scene_textlayout import VerticalTextDocumentLayout, HorizontalTextDocumentLayout, SceneTextLayout
 from .text_graphical_effect import apply_shadow_effect
 
-TEXTRECT_SHOW_COLOR = QColor(30, 147, 229, 170)
-TEXTRECT_SELECTED_COLOR = QColor(248, 64, 147, 170)
-
+# change the opacity values of the blue and pink selectors to 125
+TEXTRECT_SHOW_COLOR = QColor(30, 147, 229, 125)
+TEXTRECT_SELECTED_COLOR = QColor(248, 64, 147, 125)
 
 class TextBlkItem(QGraphicsTextItem):
 
@@ -462,10 +462,12 @@ class TextBlkItem(QGraphicsTextItem):
 
         draw_rect = self.draw_rect and not self.under_ctrl
         if self.isSelected() and not self.is_editting():
-            pen = QPen(TEXTRECT_SELECTED_COLOR, 3.5 / self.get_scale(), Qt.PenStyle.DashLine)
+            # make the pink selector a solid line instead of a dashed one
+            pen = QPen(TEXTRECT_SELECTED_COLOR, 3.5 / self.get_scale(), Qt.PenStyle.SolidLine)
             painter.setPen(pen)
             painter.drawRect(self.unpadRect(br))
-        elif draw_rect:
+        else:
+            # make the blue border remain all the time
             pen = QPen(TEXTRECT_SHOW_COLOR, 3 / self.get_scale(), Qt.PenStyle.SolidLine)
             painter.setPen(pen)
             painter.drawRect(self.unpadRect(br))
