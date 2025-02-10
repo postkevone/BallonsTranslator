@@ -197,7 +197,7 @@ class FontSizeBox(QFrame):
             size = size.strip("+")
             multi_size=True
         size = float(size)
-        newsize = int(round(size + 2))
+        newsize = int(round(size - 2))
         if newsize == size:
             newsize -= 1
         newsize = max(1, newsize)
