@@ -269,10 +269,6 @@ class SourceTextEdit(QTextEdit):
             e.setAccepted(True)
             return
 
-        if e.modifiers() == Qt.KeyboardModifier.ControlModifier and e.key() == Qt.Key.Key_P:
-            self.on_pyphen()
-            return
-
         if e.modifiers() == Qt.KeyboardModifier.ControlModifier:
             if e.key() == Qt.Key.Key_Z:
                 e.accept()
@@ -285,6 +281,9 @@ class SourceTextEdit(QTextEdit):
             elif e.key() == Qt.Key.Key_V:
                 self.paste_flag = True
                 return super().keyPressEvent(e)
+            elif e.key() == Qt.Key.Key_P:
+                self.on_pyphen()
+                return
         elif e.modifiers() == Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier:
             if e.key() == Qt.Key.Key_Z:
                 e.accept()
