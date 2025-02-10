@@ -7,9 +7,8 @@ import keyboard
 import webbrowser
 import numpy as np
 
-import pyphen, nltk # add pyphen and nltk
+import pyphen # add pyphen and nltk
 dic = pyphen.Pyphen(lang='en_US') # set dic for pyphen
-from nltk.corpus import wordnet
 
 from .custom_widget import ScrollBar, Widget, SeparatorWidget, ClickableLabel
 from .textitem import TextBlock
@@ -258,12 +257,12 @@ class SourceTextEdit(QTextEdit):
         cursor = self.textCursor()
         if cursor.hasSelection():
             self.selected_text = cursor.selectedText()
-            if wordnet.synsets(self.selected_text):
-                hyphenated_text = dic.inserted(self.selected_text)
+            hyphenated_text = dic.inserted(self.selected_text)
+            if hyphenated_text != self.selected_text:
                 cursor.insertText(hyphenated_text)
-                print("Pyphen: " + self.selected_text + " -> " + hyphenated_text)
+                print("Pyphen: ["+self.selected_text+"] -> ["+hyphenated_text+"]")
             else:
-                print("Pyphen: " + self.selected_text + " not found")
+                print("Pyphen: No hyphenation applied for ["+self.selected_text+"]")
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
         if self.block_all_input:

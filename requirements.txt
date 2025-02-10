@@ -57,4 +57,3 @@ pyobjc-framework-vision; sys_platform == 'darwin'
 msl-loadlib
 
 pyphen
-nltk
