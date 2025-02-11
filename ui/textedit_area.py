@@ -253,7 +253,13 @@ class SourceTextEdit(QTextEdit):
             self.pre_editing = True
         super().inputMethodEvent(e)
 
-    def on_pyphen(self):
+    def toUpperCase(self):
+        cursor = self.textCursor()
+        if cursor.hasSelection():
+            self.selected_text = cursor.selectedText()
+            cursor.insertText(self.selected_text.upper())
+
+    def toPyphen(self):
         cursor = self.textCursor()
         if cursor.hasSelection():
             self.selected_text = cursor.selectedText()
@@ -281,8 +287,11 @@ class SourceTextEdit(QTextEdit):
             elif e.key() == Qt.Key.Key_V:
                 self.paste_flag = True
                 return super().keyPressEvent(e)
+            elif e.key() == Qt.Key.Key_M:
+                self.toUpperCase()
+                return
             elif e.key() == Qt.Key.Key_P:
-                self.on_pyphen()
+                self.toPyphen()
                 return
         elif e.modifiers() == Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier:
             if e.key() == Qt.Key.Key_Z:
