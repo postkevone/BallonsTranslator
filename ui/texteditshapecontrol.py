@@ -272,11 +272,13 @@ class TextBlkShapeControl(QGraphicsRectItem):
 
     def paint(self, painter: QPainter, option: 'QStyleOptionGraphicsItem', widget = ...) -> None:
         #painter.setCompositionMode(QPainter.CompositionMode.RasterOp_NotDestination)
-        if not self.blk_item: # draw rectangle only if it is not a text item
-            pen = QPen(QColor(30, 147, 229, 125), 3 / self.current_scale, Qt.PenStyle.SolidLine)
-            #pen.setDashPattern([7, 14])
-            self.setPen(pen)
-            super().paint(painter, option, widget)
+        opacity = 125
+        if self.blk_item.isSelected() and not self.blk_item.is_editting(): # if the text block is being edited set opacity to 0
+            opacity = 0
+        pen = QPen(QColor(30, 147, 229, opacity), 3 / self.current_scale, Qt.PenStyle.SolidLine)
+        #pen.setDashPattern([7, 14])
+        self.setPen(pen)
+        super().paint(painter, option, widget)
 
     def hideControls(self):
         for ctrl in self.ctrlblock_group:
