@@ -27,23 +27,23 @@ class SelectTextMiniMenu(Widget):
     def __init__(self, app: QApplication, parent=None, *args, **kwargs) -> None:
         super().__init__(parent=parent, *args, **kwargs)
         self.app = app
-        #self.search_internet_btn = ClickableLabel(parent=self)
-        #self.search_internet_btn.setObjectName("SearchInternet")
-        #self.search_internet_btn.setToolTip(self.tr("Search selected text on Internet"))
+        self.search_internet_btn = ClickableLabel(parent=self)
+        self.search_internet_btn.setObjectName("SearchInternet")
+        self.search_internet_btn.setToolTip(self.tr("Search selected text on Internet"))
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
-        #self.search_internet_btn.clicked.connect(self.on_search_internet)
-        #self.saladict_btn = ClickableLabel(parent=self)
-        #self.saladict_btn.setObjectName("SalaDict")
-        #self.saladict_btn.clicked.connect(self.on_saladict)
-        #self.saladict_btn.setToolTip(self.tr("Look up selected text in SalaDict, see installation guide in configpanel"))
+        self.search_internet_btn.clicked.connect(self.on_search_internet)
+        self.saladict_btn = ClickableLabel(parent=self)
+        self.saladict_btn.setObjectName("SalaDict")
+        self.saladict_btn.clicked.connect(self.on_saladict)
+        self.saladict_btn.setToolTip(self.tr("Look up selected text in SalaDict, see installation guide in configpanel"))
         layout = QHBoxLayout(self)
-        #layout.addWidget(self.saladict_btn) remove unecessary buttons that crash if clicked
-        #layout.addWidget(self.search_internet_btn)
+        layout.addWidget(self.saladict_btn)
+        layout.addWidget(self.search_internet_btn)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
         self.selected_text = ''
-'''
+
     def on_search_internet(self):
         browser = webbrowser.get()
         browser.open_new(pcfg.search_url + self.selected_text)
@@ -56,7 +56,6 @@ class SelectTextMiniMenu(Widget):
         keyboard.release(pcfg.saladict_shortcut)
         self.block_current_editor.emit(False)
         self.hide()
-'''
 
 class SourceTextEdit(QTextEdit):
     hover_enter = Signal(int)
