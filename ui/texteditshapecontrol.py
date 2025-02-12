@@ -203,9 +203,6 @@ class TextBlkShapeControl(QGraphicsRectItem):
         
         self.previewPixmap = QGraphicsPixmapItem(self)
         self.previewPixmap.setVisible(False)
-        pen = QPen(QColor(69, 71, 87), 2, Qt.PenStyle.SolidLine)
-        pen.setDashPattern([7, 14])
-        self.setPen(pen)
         self.setVisible(False)
 
         self.angleLabel = QLabel(parent)
@@ -274,10 +271,12 @@ class TextBlkShapeControl(QGraphicsRectItem):
             self.blk_item.endEdit()
 
     def paint(self, painter: QPainter, option: 'QStyleOptionGraphicsItem', widget = ...) -> None:
-        # remove the dashed border of the text element when hovered
-        # painter.setCompositionMode(QPainter.CompositionMode.RasterOp_NotDestination)
-        # super().paint(painter, option, widget)
-        pass
+        #painter.setCompositionMode(QPainter.CompositionMode.RasterOp_NotDestination)
+        if not self.blk_item: # draw rectangle only if it is not a text item
+            pen = QPen(QColor(30, 147, 229, 125), 3 / self.current_scale, Qt.PenStyle.SolidLine)
+            #pen.setDashPattern([7, 14])
+            self.setPen(pen)
+            super().paint(painter, option, widget)
 
     def hideControls(self):
         for ctrl in self.ctrlblock_group:

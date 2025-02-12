@@ -467,7 +467,6 @@ class TextBlkItem(QGraphicsTextItem):
             painter.setPen(pen)
             painter.drawRect(self.unpadRect(br))
         else:
-            # make the blue border remain all the time
             pen = QPen(TEXTRECT_SHOW_COLOR, 3 / self.get_scale(), Qt.PenStyle.SolidLine)
             painter.setPen(pen)
             painter.drawRect(self.unpadRect(br))
