@@ -273,8 +273,9 @@ class TextBlkShapeControl(QGraphicsRectItem):
     def paint(self, painter: QPainter, option: 'QStyleOptionGraphicsItem', widget = ...) -> None:
         #painter.setCompositionMode(QPainter.CompositionMode.RasterOp_NotDestination)
         opacity = 125
-        if self.blk_item.isSelected() and not self.blk_item.is_editting(): # if the text block is being edited set opacity to 0
-            opacity = 0
+        if self.blk_item:
+            if self.blk_item.isSelected() and not self.blk_item.is_editting(): # if the text block is being edited set opacity to 0
+                opacity = 0
         pen = QPen(QColor(30, 147, 229, opacity), 3 / self.current_scale, Qt.PenStyle.SolidLine)
         #pen.setDashPattern([7, 14])
         self.setPen(pen)
