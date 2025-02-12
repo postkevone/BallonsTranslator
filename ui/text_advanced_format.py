@@ -3,7 +3,7 @@ from typing import Any, Callable
 from qtpy.QtWidgets import QSizePolicy, QVBoxLayout, QPushButton, QGroupBox, QLabel, QHBoxLayout
 from qtpy.QtCore import Signal, Qt
 
-from .custom_widget import SmallColorPickerLabel, SmallParamLabel, PanelArea, SmallSizeControlLabel, SmallSizeComboBox, SmallParamLabel, SmallSizeComboBox, SmallComboBox, TextCheckerLabel
+from .custom_widget import SmallColorPickerLabel, SmallParamLabel, PanelArea, SmallSizeControlLabel, SmallSizeComboBox, SmallComboBox, TextCheckerLabel # remove duplicates
 from utils.fontformat import FontFormat
 
 

@@ -23,8 +23,8 @@ from utils.logger import logger as LOGGER
 from .drawing_commands import InpaintUndoCommand, StrokeItemUndoCommand
 
 INPAINT_BRUSH_COLOR = QColor(127, 0, 127, 127)
-MAX_PEN_SIZE = 1000
-MIN_PEN_SIZE = 1
+MAX_PEN_SIZE = 80 # reduced max brush size
+MIN_PEN_SIZE = 5
 TOOLNAME_POINT_SIZE = 13
 
 class DrawToolCheckBox(QCheckBox):
