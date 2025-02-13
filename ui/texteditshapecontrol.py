@@ -39,8 +39,7 @@ class ControlBlockItem(QGraphicsRectItem):
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget) -> None:
         rect = QRectF(self.visible_rect)
         rect.setTopLeft(self.boundingRect().topLeft()+rect.topLeft())
-        # change the opacity levels of the square used to resize a text box
-        painter.setPen(QPen(QColor(75, 75, 75, 125), self.pen_width, Qt.PenStyle.SolidLine, Qt.SquareCap))
+        painter.setPen(QPen(QColor(75, 75, 75, 125), self.pen_width, Qt.PenStyle.SolidLine, Qt.SquareCap)) # change the opacity level of the square used to resize a text box
         painter.fillRect(rect, QColor(200, 200, 200, 0))
         painter.drawRect(rect)
 
@@ -225,7 +224,7 @@ class TextBlkShapeControl(QGraphicsRectItem):
             self.blk_item.update()
             
         self.blk_item = blk_item
-        if blk_item is None:
+        if blk_item is None or not self.blk_item.draw_rect: # hide shape controls when not in editing mode
             self.hide()
             return
         blk_item.under_ctrl = True
