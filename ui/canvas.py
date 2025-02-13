@@ -107,10 +107,18 @@ class CustomGV(QGraphicsView):
                 if self.canvas.handle_ctrlv():
                     e.accept()
                     return
-            if key == QKEY.Key_C:
+            elif key == QKEY.Key_C:
                 if self.canvas.handle_ctrlc():
                     e.accept()
                     return
+            elif key == QKEY.Key_J:
+                self.canvas.squeeze_blk.emit()
+                e.accept()
+                return
+            elif key == QKEY.Key_R:
+                self.canvas.reset_angle.emit()
+                e.accept()
+                return
                 
         elif modifiers & Qt.KeyboardModifier.ControlModifier and modifiers & Qt.KeyboardModifier.ShiftModifier:
             if key == QKEY.Key_C:
