@@ -974,6 +974,7 @@ class SceneTextManager(QObject):
             blk_item = self.textblk_item_list[idx]
             self.canvas.gv.ensureVisible(blk_item)
             self.txtblkShapeControl.setBlkItem(blk_item)
+            self.formatpanel.set_textblk_item(blk_item)
 
     def on_textedit_redo(self):
         self.canvas.redo_textedit()
