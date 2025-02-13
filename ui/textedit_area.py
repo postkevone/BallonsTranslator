@@ -7,13 +7,13 @@ import keyboard
 import webbrowser
 import numpy as np
 
-import pyphen # add pyphen and nltk
-dic = pyphen.Pyphen(lang='en_US') # set dic for pyphen
-
 from .custom_widget import ScrollBar, Widget, SeparatorWidget, ClickableLabel
 from .textitem import TextBlock
 from utils.config import pcfg
 from utils.logger import logger as LOGGER
+
+import pyphen # add pyphen and nltk
+dic = pyphen.Pyphen(lang='en_US') # set dic for pyphen
 
 
 STYLE_TRANSPAIR_CHECKED = "background-color: rgba(30, 147, 229, 20%);"
