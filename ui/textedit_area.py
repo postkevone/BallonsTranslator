@@ -264,7 +264,6 @@ class SourceTextEdit(QTextEdit):
             hyphenated_text = dic.inserted(self.selected_text)
             if hyphenated_text != self.selected_text:
                 cursor.insertText(hyphenated_text)
-                print("Pyphen: ["+self.selected_text+"] -> ["+hyphenated_text+"]")
             else:
                 print("Pyphen: No hyphenation applied for ["+self.selected_text+"]")
 
