@@ -1,3 +1,16 @@
+# List of improvements
+- Better default font size values (increase / decrease by 2).
+- Pyhpen integration for automatic hyphenation of English words.
+- Boxes around text elements are thinner and more transparent (better readability).
+- Boxes around text elements are only showed in edit mode (W).
+- Inpaint brush size range reduced (from 1-1000 to 5-80)
+- Better handle of focus and grouping inside the text edit panel.
+### New shortcuts:
+- (ctrl+P) Pyphen
+- (ctrl+M) Upper case
+- (ctrl+J) Squeeze
+- (ctrl+R) Reset angle 
+
 > [!IMPORTANT]  
 > **如打算公开分享本工具的机翻结果，且没有有经验的译者进行过完整的翻译或校对，请在显眼位置注明机翻。**
 
