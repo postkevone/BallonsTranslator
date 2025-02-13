@@ -8,8 +8,8 @@ from utils.fontformat import FontFormat
 
 
 class TextShadowGroup(QGroupBox):
-    def __init__(self, on_param_changed: Callable = None):
-        super().__init__(title=self.tr('Shadow'))
+    def __init__(self, on_param_changed: Callable = None, title=None):
+        super().__init__(title=title)
         self.on_param_changed = on_param_changed
 
         self.xoffset_box = SmallSizeComboBox([-2, 2], 'shadow_xoffset', self)
@@ -173,7 +173,7 @@ class TextAdvancedFormatPanel(PanelArea):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         self.scrollContent.after_resized.connect(self.adjuset_size)
 
-        self.shadow_group = TextShadowGroup(self.on_format_changed)
+        self.shadow_group = TextShadowGroup(self.on_format_changed, title=self.tr('Shadow'))
         self.shadow_group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
 
         self.gradient_group = TextGradientGroup(self.on_format_changed)

@@ -54,7 +54,7 @@ def parse_txt_translation(file_path: str):
             blkid_start = start
             blkid_end = end
         if blkid_start is not None:
-            blk_list.append(page_content[blkid_end:])
+            blk_list.append(page_content[blkid_end:].strip())
         page_dict['blk_list'] = blk_list
 
     return page_list
