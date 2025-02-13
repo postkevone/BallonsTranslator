@@ -491,6 +491,8 @@ class SceneTextManager(QObject):
         pair_widget.pw_drop.connect(self.textEditList.on_pw_dropped)
         pair_widget.idx_edited.connect(self.textEditList.on_idx_edited)
 
+        pair_widget.e_select.focus_in.connect(self.on_transwidget_focus_in)
+
         self.new_textblk.emit(blk_item.idx)
         return blk_item
 
@@ -963,7 +965,7 @@ class SceneTextManager(QObject):
     def onRotateTextBlkItem(self, item: TextBlock):
         self.canvas.push_undo_command(RotateItemCommand(item))
     
-    def on_transwidget_focus_in(self, idx: int):
+    def on_transwidget_focus_in(self, idx: int): # change the way focus_in is handled for the TransPairWidget
         if self.is_editting():
             textitm = self.editingTextItem()
             textitm.endEdit()
@@ -974,13 +976,16 @@ class SceneTextManager(QObject):
             blk_item = self.textblk_item_list[idx]
             self.canvas.gv.ensureVisible(blk_item)
             self.txtblkShapeControl.setBlkItem(blk_item)
-            blk_item.setSelected(True)
-
-        blk_item_list = self.canvas.selected_text_items()
-        if len(blk_item_list) == 1:
-            self.formatpanel.set_textblk_item(blk_item_list[0])
-        elif len(blk_item_list) > 1:
-            self.formatpanel.set_textblk_item(multi_select=True)
+            sender_class = type(self.sender()).__name__
+            if sender_class == "SelectTextEdit":
+                blk_item.setSelected(True)
+                blk_item_list = self.canvas.selected_text_items()
+                if len(blk_item_list) == 1:
+                    self.formatpanel.set_textblk_item(blk_item_list[0])
+                elif len(blk_item_list) > 1:
+                    self.formatpanel.set_textblk_item(multi_select=True)
+            else: # clicking on source or translation
+                self.formatpanel.set_textblk_item(blk_item)
 
     def on_textedit_redo(self):
         self.canvas.redo_textedit()

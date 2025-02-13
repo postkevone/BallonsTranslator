@@ -1,7 +1,7 @@
 from typing import List, Union
 
 from qtpy.QtWidgets import QStackedWidget, QSizePolicy, QTextEdit, QScrollArea, QGraphicsDropShadowEffect, QVBoxLayout, QApplication, QHBoxLayout, QSizePolicy, QLabel, QLineEdit
-from qtpy.QtCore import Signal, Qt, QMimeData, QEvent, QPoint, QSize
+from qtpy.QtCore import Signal, Qt, QMimeData, QEvent, QPoint, QSize, QObject # import qObject needed for SelectTextEdit
 from qtpy.QtGui import QIntValidator, QColor, QFocusEvent, QInputMethodEvent, QDragEnterEvent, QDropEvent, QKeyEvent, QTextCursor, QMouseEvent, QDrag, QPixmap, QKeySequence
 import keyboard
 import webbrowser
@@ -322,6 +322,12 @@ class SourceTextEdit(QTextEdit):
 class TransTextEdit(SourceTextEdit):
     pass
 
+class SelectTextEdit(QObject): # new class for handling group selecting in the text edit panel
+    focus_in = Signal(int)
+
+    def __init__(self, idx, parent):
+        super().__init__(parent)
+        self.idx = idx
 
 class RowIndexEditor(QLineEdit):
 
@@ -425,6 +431,7 @@ class TransPairWidget(Widget):
         super().__init__(*args, **kwargs)
         self.e_source = SourceTextEdit(idx, self, fold)
         self.e_trans = TransTextEdit(idx, self, fold)
+        self.e_select = SelectTextEdit(idx, self) # add SelectTextEdit property
         self.idx_label = RowIndexLabel(idx, self)
         self.idx_label.setText(str(idx + 1).zfill(2))   # showed index start from 1!
         self.submmit_idx = self.idx_label.submmit_idx.connect(self.on_idx_edited)
@@ -753,7 +760,7 @@ class TextEditListScrollArea(QScrollArea):
         if check_changed:
             self.selection_changed.emit()
             if pwc.checked:
-                pwc.e_trans.focus_in.emit(pwc.idx)
+                pwc.e_select.focus_in.emit(pwc.idx) # when the block is selected send a e_select focus signal
 
     def set_selected_list(self, selection_indices: List):
         self.clearDrag()
