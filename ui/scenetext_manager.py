@@ -974,7 +974,13 @@ class SceneTextManager(QObject):
             blk_item = self.textblk_item_list[idx]
             self.canvas.gv.ensureVisible(blk_item)
             self.txtblkShapeControl.setBlkItem(blk_item)
-            self.formatpanel.set_textblk_item(blk_item)
+            blk_item.setSelected(True)
+
+        blk_item_list = self.canvas.selected_text_items()
+        if len(blk_item_list) == 1:
+            self.formatpanel.set_textblk_item(blk_item_list[0])
+        elif len(blk_item_list) > 1:
+            self.formatpanel.set_textblk_item(multi_select=True)
 
     def on_textedit_redo(self):
         self.canvas.redo_textedit()
