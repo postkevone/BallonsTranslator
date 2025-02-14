@@ -356,6 +356,8 @@ class SceneTextManager(QObject):
 
         self.prev_blkitem: TextBlkItem = None
 
+        self.source_active = False
+
     def on_switch_textitem(self, switch_delta: int, key_event: QKeyEvent = None, current_editing_widget: Union[SourceTextEdit, TransTextEdit] = None):
         n_blk = len(self.textblk_item_list)
         if n_blk < 1:
@@ -976,8 +978,19 @@ class SceneTextManager(QObject):
             blk_item = self.textblk_item_list[idx]
             self.canvas.gv.ensureVisible(blk_item)
             self.txtblkShapeControl.setBlkItem(blk_item)
+
+            def clear_selections():
+                for blk in self.canvas.selected_text_items(): # unselect every text blk before focusing one
+                    blk.setSelected(False)
+                for pwc in self.pairwidget_list: # unselect every pair widget before focusing one
+                    pwc._set_checked_state(False)
+
             sender_class = type(self.sender()).__name__
             if sender_class == "SelectTextEdit":
+                if self.source_active:
+                    clear_selections()
+                    self.pairwidget_list[blk_item.idx]._set_checked_state(True)
+                    self.source_active = False
                 blk_item.setSelected(True)
                 blk_item_list = self.canvas.selected_text_items()
                 if len(blk_item_list) == 1:
@@ -985,7 +998,10 @@ class SceneTextManager(QObject):
                 elif len(blk_item_list) > 1:
                     self.formatpanel.set_textblk_item(multi_select=True)
             else: # clicking on source or translation
+                clear_selections()
+                blk_item.setSelected(True)
                 self.formatpanel.set_textblk_item(blk_item)
+                self.source_active = True
 
     def on_textedit_redo(self):
         self.canvas.redo_textedit()
