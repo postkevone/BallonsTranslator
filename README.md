@@ -1,7 +1,7 @@
 # List of improvements
 - Better default font size values (increase / decrease by 2).
 - Pyphen integration for automatic hyphenation of English words.
-- Boxes around text elements are thinner and more transparent (better readability).
+- Boxes around text elements are thinner, more transparent and do not overlap (better readability).
 - Boxes around text elements are only showed in edit mode (W).
 - Inpaint brush size range reduced (from 1-1000 to 5-80)
 - Better handle of focus and grouping inside the text edit panel.
