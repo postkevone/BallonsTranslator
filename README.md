@@ -11,6 +11,7 @@ In text edit area:
 - (ctrl+M) Upper case
 
 In canvas:
+- (ctrl+L) Auto layout
 - (ctrl+J) Squeeze
 - (ctrl+R) Reset angle 
 

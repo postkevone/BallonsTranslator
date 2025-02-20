@@ -115,6 +115,10 @@ class CustomGV(QGraphicsView):
                 self.canvas.squeeze_blk.emit()
                 e.accept()
                 return
+            elif key == QKEY.Key_L:
+                self.canvas.layout_textblks.emit()
+                e.accept()
+                return
             elif key == QKEY.Key_R:
                 self.canvas.reset_angle.emit()
                 e.accept()
