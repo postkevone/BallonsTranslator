@@ -23,7 +23,7 @@ REQ_WIN = [
     'pywin32'
 ]
 
-PATH_ROOT=Path(__file__).parent  
+PATH_ROOT=Path(__file__).parent
 PATH_FONTS=str(PATH_ROOT/'fonts')
 FONT_EXTS = {'.ttf','.otf','.ttc','.pfb'}
 
@@ -45,6 +45,7 @@ parser.add_argument("--ldpi", default=None, type=float, help='logical dots perin
 parser.add_argument("--export-translation-txt", action='store_true', help='save translation to txt file once RUN completed')
 parser.add_argument("--export-source-txt", action='store_true', help='save source to txt file once RUN completed')
 parser.add_argument("--frozen", action='store_true', help='run without checking requirements')
+parser.add_argument("--update", action='store_true', help="Update the repository before launching") # Добавлен аргумент --update
 args, _ = parser.parse_known_args()
 
 
@@ -90,7 +91,7 @@ def run_pip(args, desc=None):
         return
 
     index_url_line = f' --index-url {index_url}' if index_url != '' else ''
-    return run(f'"{python}" -m pip {args} --prefer-binary{index_url_line} --disable-pip-version-check', desc=f"Installing {desc}", errdesc=f"Couldn't install {desc}", live=True)
+    return run(f'"{python}" -m pip {args} --prefer-binary{index_url_line} --disable-pip-version-check --no-warn-script-location', desc=f"Installing {desc}", errdesc=f"Couldn't install {desc}", live=True)
 
 
 def commit_hash():
@@ -133,7 +134,8 @@ APP = None
 def restart():
     global BT
     print('restarting...\n')
-    BT.close()
+    if BT: # Проверка на None перед закрытием
+        BT.close()
     os.execv(sys.executable, ['python'] + sys.argv)
 
 
@@ -156,6 +158,30 @@ def main():
     os.chdir(APP_DIR)
 
     prepare_environment()
+
+    # Проверка обновлений ПЕРЕД инициализацией GUI
+    if args.update:
+        if getattr(sys, 'frozen', False):
+            print('Running as app, skipping update.')
+        else:
+            print('Checking for updates...')
+            try:
+                current_commit = commit_hash()
+                run(f"{git} fetch origin {BRANCH}", desc="Fetching updates from git...", errdesc="Failed to fetch updates.")
+                latest_commit = run(f"{git} rev-parse origin/{BRANCH}").strip()
+
+                if current_commit != latest_commit:
+                    print("New updates found. Updating repository...")
+                    run(f"{git} pull origin {BRANCH}", desc="Updating repository...", errdesc="Failed to update repository.")
+                    print("Repository updated. Restarting to apply updates...")
+                    restart()
+                    return # Важно выйти после перезапуска, чтобы продолжить уже в новом процессе
+                else:
+                    print("No updates found.")
+            except Exception as e:
+                print(f"Update check failed: {e}")
+                print("Continuing with the current version.")
+
 
     from utils.logger import setup_logging, logger as LOGGER
     import utils.shared as shared
@@ -234,9 +260,9 @@ def main():
             fnt_idx = QFontDatabase.addApplicationFont(fp)
             if fnt_idx >= 0:
                 shared.CUSTOM_FONTS.append(QFontDatabase.applicationFontFamilies(fnt_idx)[0])
-    
+
     if sys.platform == 'win32' and args.headless:
-        # font database does not initialise on windows with qpa -offscreen: 
+        # font database does not initialise on windows with qpa -offscreen:
         # whttps://github.com/dmMaze/BallonsTranslator/issues/519
         from qtpy.QtCore import QStandardPaths
         font_dir_list = QStandardPaths.standardLocations(QStandardPaths.FontsLocation)
@@ -272,6 +298,7 @@ def main():
     BT = ballontrans
     BT.restart_signal.connect(restart)
 
+
     if not args.headless:
         if shared.SCREEN_W > 1707 and sys.platform == 'win32':   # higher than 2560 (1440p) / 1.5
             # https://github.com/dmMaze/BallonsTranslator/issues/220
@@ -286,7 +313,7 @@ def prepare_environment():
     if getattr(sys, 'frozen', False):
         print('Running as app, skip dependency installation')
         return
-    
+
     if args.frozen:
         return
 

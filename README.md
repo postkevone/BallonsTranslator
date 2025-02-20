@@ -64,6 +64,9 @@ $ git clone https://github.com/dmMaze/BallonsTranslator.git ; cd BallonsTranslat
 
 # 启动程序
 $ python3 launch.py
+
+# 更新程序
+python3 launch.py --update
 ```
 
 第一次运行会自动安装 torch 等依赖项并下载所需模型和文件，如果模型下载失败，需要手动从 [MEGA](https://mega.nz/folder/gmhmACoD#dkVlZ2nphOkU5-2ACb5dKw) 或 [Google Drive](https://drive.google.com/drive/folders/1uElIYRLNakJj-YS0Kd3r3HE-wzeEvrWd?usp=sharing) 下载 data 文件夹(或者报错里提到缺失的文件)，并保存到源码目录下的对应位置。

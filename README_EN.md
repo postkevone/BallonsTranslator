@@ -44,8 +44,11 @@ Install [Python](https://www.python.org/downloads/release/python-31011) **< 3.12
 # Clone this repo
 $ git clone https://github.com/dmMaze/BallonsTranslator.git ; cd BallonsTranslator
 
-# Launch the app
+# Launch app
 $ python3 launch.py
+
+# Update app
+$ python3 launch.py --update
 ```
 
 Note the first time you launch it will install the required libraries and download models automatically. If the downloads fail, you will need to download the **data** folder (or missing files mentioned in the terminal) from [MEGA](https://mega.nz/folder/gmhmACoD#dkVlZ2nphOkU5-2ACb5dKw) or [Google Drive](https://drive.google.com/drive/folders/1uElIYRLNakJj-YS0Kd3r3HE-wzeEvrWd?usp=sharing) and save it to the corresponding path in source code folder.
