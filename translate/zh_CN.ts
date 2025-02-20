@@ -1342,6 +1342,16 @@ All existing translation results will be cleared!</source>
         <source>Set Text Opacity</source>
         <translation>文本不透明度</translation>
     </message>
+    <message>
+        <location filename="../ui/text_advanced_format.py" line="176"/>
+        <source>Shadow</source>
+        <translation>阴影</translation>
+    </message>
+    <message>
+        <location filename="../ui/text_advanced_format.py" line="164"/>
+        <source>Opacity</source>
+        <translation>不透明度</translation>
+    </message>
 </context>
 <context>
     <name>TextEffectPanel</name>
@@ -1522,7 +1532,7 @@ All existing translation results will be cleared!</source>
     <message>
         <location filename="../ui/text_advanced_format.py" line="12"/>
         <source>Shadow</source>
-        <translation>阴影</translation>
+        <translation type="obsolete">阴影</translation>
     </message>
     <message>
         <location filename="../ui/text_advanced_format.py" line="16"/>

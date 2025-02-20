@@ -161,7 +161,7 @@ class TextAdvancedFormatPanel(PanelArea):
         self.opacity_box = SmallSizeComboBox([0, 1], 'opacity', self, init_value=1.)
         self.opacity_box.setToolTip(self.tr("Set Text Opacity"))
         self.opacity_box.param_changed.connect(self.on_format_changed)
-        self.opacity_label = SmallSizeControlLabel(self, direction=1, text='Opacity', alignment=Qt.AlignmentFlag.AlignCenter)
+        self.opacity_label = SmallSizeControlLabel(self, direction=1, text=self.tr('Opacity'), alignment=Qt.AlignmentFlag.AlignCenter)
         self.opacity_label.size_ctrl_changed.connect(self.opacity_box.changeByDelta)
         self.opacity_label.btn_released.connect(lambda : self.on_format_changed('opacity', self.opacity_box.value()))
         opacity_layout = QHBoxLayout()

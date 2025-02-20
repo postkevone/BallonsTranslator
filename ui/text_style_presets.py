@@ -148,7 +148,7 @@ class TextStyleLabel(Widget):
         if len(updated_keys) > 0:
             save_text_styles()
         
-        preview_keys = {'family', 'frgb', 'srgb', 'stroke_width'}
+        preview_keys = {'font_family', 'frgb', 'srgb', 'stroke_width'}
         for k in updated_keys:
             if k in preview_keys:
                 self.updatePreview()
