@@ -70,24 +70,25 @@ class ControlBlockItem(QGraphicsRectItem):
         self.ctrl.ctrlblockPressed()
         if event.button() == Qt.MouseButton.LeftButton:
             blk_item = self.ctrl.blk_item
-            blk_item.setSelected(True)
-            if self.visible_rect.contains(event.pos()):
-                self.ctrl.reshaping = True
-                self.drag_mode = self.DRAG_RESHAPE
-                self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
-                blk_item.startReshape()
-            else:
-                self.drag_mode = self.DRAG_ROTATE
-                self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
-                preview = self.ctrl.previewPixmap
+            if blk_item is not None: #AttributeError: 'NoneType' object has no attribute 'setSelected'
+                blk_item.setSelected(True)
+                if self.visible_rect.contains(event.pos()):
+                    self.ctrl.reshaping = True
+                    self.drag_mode = self.DRAG_RESHAPE
+                    self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
+                    blk_item.startReshape()
+                else:
+                    self.drag_mode = self.DRAG_ROTATE
+                    self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
+                    preview = self.ctrl.previewPixmap
 
-                preview.setPixmap(blk_item.toPixmap().copy(blk_item.unpadRect(blk_item.boundingRect()).toRect()))
-                preview.setOpacity(0.7)
-                preview.setVisible(True)
-                rotate_vec = event.scenePos() - self.ctrl.sceneBoundingRect().center()
-                self.updateAngleLabelPos()
-                rotation = np.rad2deg(math.atan2(rotate_vec.y(), rotate_vec.x()))
-                self.rotate_start = - rotation + self.ctrl.rotation() 
+                    preview.setPixmap(blk_item.toPixmap().copy(blk_item.unpadRect(blk_item.boundingRect()).toRect()))
+                    preview.setOpacity(0.7)
+                    preview.setVisible(True)
+                    rotate_vec = event.scenePos() - self.ctrl.sceneBoundingRect().center()
+                    self.updateAngleLabelPos()
+                    rotation = np.rad2deg(math.atan2(rotate_vec.y(), rotate_vec.x()))
+                    self.rotate_start = - rotation + self.ctrl.rotation() 
         event.accept()
 
     def updateAngleLabelPos(self):
