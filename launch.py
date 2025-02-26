@@ -8,6 +8,7 @@ import re
 import subprocess
 import pkg_resources
 from platform import platform
+import logging
 
 BRANCH = 'dev'
 VERSION = '1.4.0'
@@ -109,7 +110,7 @@ def commit_hash():
 
 
 def load_modules():
-
+    LOGGER = logging.getLogger('BallonTranslator')
     def _load_module(module_dir: str, module_pattern: str):
         modules = os.listdir(module_dir)
         pattern = re.compile(module_pattern)
@@ -118,7 +119,11 @@ def load_modules():
             module_path += '.'
         for module_name in modules:
             if pattern.match(module_name) is not None:
-                importlib.import_module(module_path + module_name.replace('.py', ''))
+                try:
+                    module = module_path + module_name.replace('.py', '')
+                    importlib.import_module(module)
+                except Exception as e:
+                    LOGGER.warning(f'Failed to import {module}: {e}')
 
     for kwargs in [
         {'module_dir': 'modules/translators', 'module_pattern': r'trans_(.*?).py'},
@@ -134,7 +139,7 @@ APP = None
 def restart():
     global BT
     print('restarting...\n')
-    if BT: # Проверка на None перед закрытием
+    if BT:
         BT.close()
     os.execv(sys.executable, ['python'] + sys.argv)
 
@@ -159,7 +164,6 @@ def main():
 
     prepare_environment()
 
-    # Проверка обновлений ПЕРЕД инициализацией GUI
     if args.update:
         if getattr(sys, 'frozen', False):
             print('Running as app, skipping update.')
@@ -175,7 +179,7 @@ def main():
                     run(f"{git} pull origin {BRANCH}", desc="Updating repository...", errdesc="Failed to update repository.")
                     print("Repository updated. Restarting to apply updates...")
                     restart()
-                    return # Важно выйти после перезапуска, чтобы продолжить уже в новом процессе
+                    return
                 else:
                     print("No updates found.")
             except Exception as e:

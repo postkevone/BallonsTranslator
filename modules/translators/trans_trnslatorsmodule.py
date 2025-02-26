@@ -1,4 +1,8 @@
 from .base import *
+import os
+
+os.environ['translators_default_region'] = os.environ.get('translators_default_region', 'EN')
+
 import translators as ts
 
 @register_translator('TranslatorsPack')

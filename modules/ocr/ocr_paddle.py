@@ -2,13 +2,14 @@ import numpy as np
 from typing import List
 import os
 import logging
+LOGGER = logging.getLogger('BallonTranslator')
 
 try:
     from paddleocr import PaddleOCR
     PADDLE_OCR_AVAILABLE = True
 except ImportError:
     PADDLE_OCR_AVAILABLE = False
-    logging.warning(
+    LOGGER.warning(
         'PaddleOCR is not installed, so the module will not be initialized. \nInstall core it by following https://www.paddlepaddle.org.cn/en/install/quick?docurl \nand then run `pip install paddleocr`'
     )
 

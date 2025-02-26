@@ -153,23 +153,8 @@ This project is heavily dependent upon [manga-image-translator](https://github.c
   * All lama* are finetuned using [LaMa](https://github.com/advimman/lama)
   * PatchMatch is an algorithm from [PyPatchMatch](https://github.com/vacancy/PyPatchMatch), this program uses a [modified version](https://github.com/dmMaze/PyPatchMatchInpaint) by me. 
   
-
 ## Translators
-Available translators: Google, DeepL, ChatGPT, Sugoi, Caiyun, Baidu. Papago, and Yandex.
- * Google shuts down translate service in China, please set corresponding 'url' in config panel to *.com.
- * [Caiyun](https://dashboard.caiyunapp.com/), [ChatGPT](https://platform.openai.com/playground), [Yandex](https://yandex.com/dev/translate/), [Baidu](http://developers.baidu.com/), and [DeepL](https://www.deepl.com/docs-api/api-access) translators needs to require a token or api key.
- * DeepL & Sugoi translator (and it's CT2 Translation conversion) thanks to [Snowad14](https://github.com/Snowad14).
- * Sugoi translates Japanese to English completely offline. Download [offline model](https://drive.google.com/drive/folders/1KnDlfUM9zbnYFTo6iCbnBaBKabXfnVJm), move "sugoi_translator" into the BallonsTranslator/ballontranslator/data/models. 
- * [Sakura-13B-Galgame](https://github.com/SakuraLLM/Sakura-13B-Galgame), check ```low vram mode``` in config panel if you\'re running it locally on a single device and encountered a crash due to vram OOM (enabled by default).
- * DeepLX: Please refer to [Vercel](https://github.com/bropines/Deeplx-vercel) or [deeplx](https://github.com/OwO-Network/DeepLX)
- * Added the [Translators](https://github.com/UlionTse/translators) library, which supports access to some translator services without api keys. You can find out about supported services [here](https://github.com/UlionTse/translators#supported-translation-services).
- * Supports two versions of OpenAI-compliant translators that work with official or third-party LLM providers compatible with the OpenAI API, requiring configuration in the settings panel.
-    * The non-suffix version consumes fewer tokens but has slightly weaker sentence splitting stability, which may cause issues with long text translations.
-    * The 'exp' suffix version uses more tokens, but has better stability and includes "jailbreaking" in the Prompt, making it suitable for long text translations.
-
-For other good offline English translators, please refer to this [thread](https://github.com/dmMaze/BallonsTranslator/discussions/515).  
-To add a new translator, please reference [how_to_add_new_translator](doc/how_to_add_new_translator.md), it is simple as subclass a BaseClass and implementing two interfaces, then you can use it in the application, you are welcome to contribute to the project.  
-
+* **You can find information about Translators modules [here.](doc/modules/translators.md)**
 
 ## FAQ & Misc
 * If your computer has an Nvidia GPU or Apple silicon, the program will enable hardware acceleration. 
