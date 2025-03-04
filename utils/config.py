@@ -66,6 +66,7 @@ class ProgramConfig(Config):
     drawpanel: DrawPanelConfig = field(default_factory=lambda: DrawPanelConfig())
     global_fontformat: FontFormat = field(default_factory=lambda: FontFormat())
     recent_proj_list: List = field(default_factory=lambda: list())
+    show_page_list: bool = False
     imgtrans_paintmode: bool = False
     imgtrans_textedit: bool = True
     imgtrans_textblock: bool = True

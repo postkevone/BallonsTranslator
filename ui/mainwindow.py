@@ -257,6 +257,8 @@ class MainWindow(mainwindow_cls):
         self.bottomBar.originalSlider.setValue(int(pcfg.original_transparency * 100))
         self.drawingPanel.maskTransperancySlider.setValue(int(pcfg.mask_transparency * 100))
         self.leftBar.initRecentProjMenu(pcfg.recent_proj_list)
+        self.leftBar.showPageListLabel.setChecked(pcfg.show_page_list)
+        self.updatePageList()
         self.leftBar.save_config.connect(self.save_config)
         self.leftBar.imgTransChecker.setChecked(True)
         self.st_manager.formatpanel.global_format = pcfg.global_fontformat
@@ -443,6 +445,8 @@ class MainWindow(mainwindow_cls):
             self.leftStackWidget.setCurrentWidget(self.pageList)
         else:
             self.leftStackWidget.hide()
+        pcfg.show_page_list = setup
+        save_config()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.st_manager.hovering_transwidget = None
