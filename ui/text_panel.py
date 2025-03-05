@@ -286,6 +286,7 @@ class FontFormatPanel(Widget):
         self.colorPicker.setToolTip(self.tr("Change font color"))
         self.colorPicker.changingColor.connect(self.changingColor)
         self.colorPicker.colorChanged.connect(self.onColorLabelChanged)
+        self.colorPicker.apply_color.connect(self.on_apply_color)
 
         self.alignBtnGroup = AlignmentBtnGroup(self)
         self.alignBtnGroup.param_changed.connect(self.on_param_changed)
@@ -314,6 +315,7 @@ class FontFormatPanel(Widget):
         self.strokeColorPicker.setToolTip(self.tr("Change stroke color"))
         self.strokeColorPicker.changingColor.connect(self.changingColor)
         self.strokeColorPicker.colorChanged.connect(self.onColorLabelChanged)
+        self.strokeColorPicker.apply_color.connect(self.on_apply_color)
 
         stroke_hlayout = QHBoxLayout()
         stroke_hlayout.addWidget(self.fontStrokeLabel)
@@ -355,12 +357,17 @@ class FontFormatPanel(Widget):
         color_label = self.textadvancedfmt_panel.shadow_group.color_label
         color_label.changingColor.connect(self.changingColor)
         color_label.colorChanged.connect(self.onColorLabelChanged)
+        color_label.apply_color.connect(self.on_apply_color)
+
         color_label = self.textadvancedfmt_panel.gradient_group.start_picker
         color_label.changingColor.connect(self.changingColor)
         color_label.colorChanged.connect(self.onColorLabelChanged)
+        color_label.apply_color.connect(self.on_apply_color)
+        
         color_label = self.textadvancedfmt_panel.gradient_group.end_picker
         color_label.changingColor.connect(self.changingColor)
         color_label.colorChanged.connect(self.onColorLabelChanged)
+        color_label.apply_color.connect(self.on_apply_color)
         
         self.foldTextBtn = CheckableLabel(self.tr("Unfold"), self.tr("Fold"), False)
         self.sourceBtn = TextCheckerLabel(self.tr("Source"))
@@ -423,9 +430,9 @@ class FontFormatPanel(Widget):
         return self.textstyle_panel.active_text_style_label
 
     def on_param_changed(self, param_name: str, value):
-        func = FM.handle_ffmt_change.get(param_name if not param_name == "rel_font_size" else "font_size")
+        func = FM.handle_ffmt_change.get(param_name)
         func_kwargs = {}
-        if param_name == 'font_size':
+        if param_name in {'font_size', 'rel_font_size'}:
             func_kwargs['clip_size'] = True
         if self.global_mode():
             func(param_name, value, self.global_format, is_global=True, **func_kwargs)
@@ -448,6 +455,9 @@ class FontFormatPanel(Widget):
             sender: ColorPickerLabel = self.sender()
             rgb = sender.rgb()
             self.on_param_changed(sender.param_name, rgb)
+
+    def on_apply_color(self, param_name, rgb):
+        self.on_param_changed(param_name, rgb)
 
     def onLineSpacingCtrlChanged(self, delta: int):
         if C.active_format.line_spacing_type == LineSpacingType.Distance:
@@ -523,10 +533,7 @@ class FontFormatPanel(Widget):
                     self.textblk_item.fontformat = copy.deepcopy(C.active_format)
                 self.textblk_item = None
                 self.set_active_format(self.global_format, multi_select)
-                if multi_select:
-                    self.textstyle_panel.setTitle('Group')
-                else:
-                    self.set_globalfmt_title()
+                self.set_globalfmt_title()
             
         else:
             if not self.restoring_textblk:

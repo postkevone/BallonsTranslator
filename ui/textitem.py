@@ -916,10 +916,8 @@ class TextBlkItem(QGraphicsTextItem):
             self.update()
 
     def setRelFontSize(self, value: float, repaint_background: bool = False, set_selected: bool = False, restore_cursor: bool = False, clip_size: bool = False, **kwargs):
-        self.is_formatting = True
-        self.block_change_signal = True
         self.layout.relayout_on_changed = False
-        old_undo_steps = self.document().availableUndoSteps()
+        _, after_kwargs = self._before_set_ffmt(set_selected, restore_cursor)
         doc = self.document()
         cursor = QTextCursor(doc)
         block = doc.firstBlock()
@@ -938,16 +936,12 @@ class TextBlkItem(QGraphicsTextItem):
                 cursor.mergeCharFormat(cfmt)
                 it += 1
             block = block.next()
-        self.old_undo_steps = new_undo_steps = self.document().availableUndoSteps()
         self.layout.relayout_on_changed = True
         self.layout.reLayoutEverything()
-        self.squeezeBoundingRect(True, repaint=False)
-        self.repaint_background()
-        new_steps = new_undo_steps - old_undo_steps
-        self.push_undo_stack.emit(new_steps, self.is_formatting)
+        if clip_size:
+            self.squeezeBoundingRect(True, repaint=False)
 
-        self.is_formatting = False
-        self.block_change_signal = False        
+        self._after_set_ffmt(cursor, repaint_background, restore_cursor, **after_kwargs)
         
 
     def setFontSize(self, value: float, repaint_background: bool = False, set_selected: bool = False, restore_cursor: bool = False, clip_size: bool = False, **kwargs):
@@ -956,7 +950,7 @@ class TextBlkItem(QGraphicsTextItem):
         '''
         
         cursor, after_kwargs = self._before_set_ffmt(set_selected=set_selected, restore_cursor=restore_cursor)
-
+        self.layout.relayout_on_changed = False
         if self.fontformat.stroke_width != 0:
             repaint_background = True
         if repaint_background:
@@ -968,6 +962,8 @@ class TextBlkItem(QGraphicsTextItem):
         cfmt = QTextCharFormat()
         cfmt.setFontPointSize(value)
         self.set_cursor_cfmt(cursor, cfmt, True)
+        self.layout.relayout_on_changed = True
+        self.layout.reLayoutEverything()
         if clip_size:
             self.squeezeBoundingRect(cond_on_alignment=True)
 

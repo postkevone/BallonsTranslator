@@ -1,7 +1,7 @@
 from typing import List, Union, Tuple
 
 import numpy as np
-from qtpy.QtWidgets import QGraphicsOpacityEffect, QLabel, QColorDialog
+from qtpy.QtWidgets import QGraphicsOpacityEffect, QLabel, QColorDialog, QMenu
 from qtpy.QtCore import  Qt, QPropertyAnimation, QEasingCurve, Signal
 from qtpy.QtGui import QMouseEvent, QWheelEvent, QColor
 
@@ -43,19 +43,28 @@ class FadeLabel(QLabel):
 
 class ColorPickerLabel(QLabel):
     colorChanged = Signal(bool)
+    apply_color = Signal(str, tuple)
     changingColor = Signal()
     def __init__(self, parent=None, param_name='', *args, **kwargs):
         super().__init__(parent=parent, *args, **kwargs)
         self.color: QColor = None
         self.param_name = param_name
 
-    def mousePressEvent(self, event):
-        self.changingColor.emit()
-        color = QColorDialog.getColor()
-        is_valid = color.isValid()
-        if is_valid:
-            self.setPickerColor(color)
-        self.colorChanged.emit(is_valid)
+    def mousePressEvent(self, event: QMouseEvent):
+        btn = event.button()
+        if btn == Qt.MouseButton.LeftButton:
+            self.changingColor.emit()
+            color = QColorDialog.getColor()
+            is_valid = color.isValid()
+            if is_valid:
+                self.setPickerColor(color)
+            self.colorChanged.emit(is_valid)
+        elif btn == Qt.MouseButton.RightButton:
+            menu = QMenu(self)
+            apply_act = menu.addAction(self.tr("Apply Color"))
+            rst = menu.exec(event.globalPosition().toPoint())
+            if rst == apply_act and self.color is not None:
+                self.apply_color.emit(self.param_name, self.rgb())
 
     def setPickerColor(self, color: Union[QColor, List, Tuple]):
         if not isinstance(color, QColor):
