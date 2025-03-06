@@ -77,8 +77,9 @@ class OCRGoogleVisionAPI(OCRBase):
             try:
                 params['delay'] = float(params['delay'])
             except (ValueError, TypeError):
-                params['delay'] = 1.0  # Default value
+                params['delay'] = 1.0  
         super().__init__(**params)
+        self.proxy_url = self.proxy  
         self.last_request_time = 0
 
     def send_to_google_vision(self, image_buffer: bytes):
@@ -110,20 +111,28 @@ class OCRGoogleVisionAPI(OCRBase):
             "Content-Type": "application/json"
         }
 
-        proxy_url = self.proxy
+        client_kwargs = {'headers': headers} 
+        if self.proxy_url: 
+            mounts = {}
+            if self.proxy_url.startswith(('http://', 'https://', 'socks4://', 'socks5://')): 
+                mounts["all://"] = httpx.HTTPTransport(proxy=self.proxy_url) 
+            else:
+                self.logger.warning("The proxy URL does not contain a schema (http://, https://, socks4://, socks5://). The proxy may not work.")
+                mounts["all://"] = httpx.HTTPTransport(proxy=self.proxy_url) 
+            client_kwargs['mounts'] = mounts 
 
-        with httpx.Client(proxy=proxy_url) as client:
+        with httpx.Client(**client_kwargs) as client: 
             try:
                 if self.debug_mode:
-                    self.logger.debug(f"Sending request to Google Vision API...")
+                    proxy_info = self.proxy_url if self.proxy_url else "No proxy"
+                    self.logger.debug(f"Sending request to Google Vision API with proxy: {proxy_info}")
 
                 response = client.post(VISION_API_URL, headers=headers, json=request_body)
-                response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+                response.raise_for_status() 
 
                 return response.json()
             except httpx.HTTPError as e:
                 raise Exception(f"Error during request to Google Vision API: {e}")
-
 
     def extract_text_and_coordinates(self, annotations):
         text_with_coords = []
@@ -262,3 +271,5 @@ class OCRGoogleVisionAPI(OCRBase):
             except (ValueError, TypeError):
                 param_content = 1.0
         super().updateParam(param_key, param_content)
+        if param_key == 'proxy':
+            self.proxy_url = param_content 
