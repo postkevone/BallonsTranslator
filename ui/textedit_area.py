@@ -714,7 +714,7 @@ class TextEditListScrollArea(QScrollArea):
                 tgt_w = self.pairwidget_list[idx]
                 if ctrl_pressed:
                     sel_min, sel_max = min(old_idx_list[0], tgt_w.idx), max(old_idx_list[-1], tgt_w.idx)
-                else:
+                elif self.sel_anchor_widget is not None: #AttributeError: 'NoneType' object has no attribute 'idx'
                     sel_min, sel_max = min(self.sel_anchor_widget.idx, tgt_w.idx), max(self.sel_anchor_widget.idx, tgt_w.idx)
                 new_check_list = list(range(sel_min, sel_max + 1))
         elif ctrl_pressed:
