@@ -1,19 +1,20 @@
 # List of improvements
-- Better default font size values (increase / decrease by 2).
-- Pyphen integration for automatic hyphenation of English words.
-- Boxes around text elements are thinner, more transparent and do not overlap (better readability).
-- Boxes around text elements are only showed in edit mode (W).
-- Inpaint brush size range reduced (from 1-1000 to 5-200)
-- Better handle of focus and grouping inside the text edit panel.
+- Better default font size values (increase / decrease by 2). [[985fdd5](https://github.com/dmMaze/BallonsTranslator/commit/985fdd56a31645db2f6de487d74cfc9382c1c827), [1e4ce30](https://github.com/dmMaze/BallonsTranslator/commit/1e4ce3046b51a3c50aa6e06e0d0c4105148e3b55), [03b2a9a](https://github.com/dmMaze/BallonsTranslator/commit/03b2a9a0de0b8b0c351051f8ffa1321e8dff74bc)]
+- Pyphen integration for automatic hyphenation of English words. [[3c3b9bd](https://github.com/dmMaze/BallonsTranslator/commit/3c3b9bd7b9119b9d4b293b86dd2af4e627ac106f), [a7f1b59](https://github.com/dmMaze/BallonsTranslator/commit/a7f1b591ed742d862960672aff2eb77d48a7410f), [10e57f7](https://github.com/dmMaze/BallonsTranslator/commit/10e57f772d11e0a6fdb02609633b44ac8d185b8f)]
+- Boxes around text elements are thinner, more transparent and do not overlap (better readability). [[a8c5173](https://github.com/dmMaze/BallonsTranslator/commit/a8c517341e9b07f5b41cbd269efb9225446a7b2b), [d2ead0d](https://github.com/dmMaze/BallonsTranslator/commit/d2ead0df287d1498e11e8df91c9785ae4ea4c2e3), [2b7389b](https://github.com/dmMaze/BallonsTranslator/commit/2b7389be36da782bff60167d94940db1a7d4ea92), [7a697c2](https://github.com/dmMaze/BallonsTranslator/commit/7a697c2aa5c4f9a84075abe26b56aff632d22b6b), [93bb974](https://github.com/dmMaze/BallonsTranslator/commit/93bb9742f6b9c3d807a95a16930bcd6322c83d3c)]
+- Boxes around text elements are only showed in edit mode (W). [[53a1002](https://github.com/dmMaze/BallonsTranslator/commit/53a100268d88d19db50ee74ae99861acc1251860)]
+- Inpaint brush size range reduced (from 1-1000 to 5-200) [[6cc41d0](https://github.com/dmMaze/BallonsTranslator/commit/6cc41d090bd4342795ad688561302cf0a8b7b37d)]
+- Better handle of focus and grouping inside the text edit panel. [[e6c61a8](https://github.com/dmMaze/BallonsTranslator/commit/e6c61a8169a538183e77ce168cb097d53ed9b745), [93101c3](https://github.com/dmMaze/BallonsTranslator/commit/93101c30e670bcae911184b41c410496d4c54d26), [df4b608](https://github.com/dmMaze/BallonsTranslator/commit/df4b60839b9c01abf7e5e4b548cfa7c90ad2218e), [b7600d3](https://github.com/dmMaze/BallonsTranslator/commit/b7600d32e9b5fd0e6fccf7b24b4236858f13ea15)]
+- Code improvements and crash fixes. [[21a4b93](https://github.com/dmMaze/BallonsTranslator/commit/21a4b931d885136b9110911a5d674e15434eda53), [883f3f9](https://github.com/dmMaze/BallonsTranslator/commit/883f3f9e31984ec7d51d2ed08295ec4b4847e036), [4cf4aca](https://github.com/dmMaze/BallonsTranslator/commit/4cf4acaea40c8b7a817c61bf1405cf9211711756), [b514c19](https://github.com/dmMaze/BallonsTranslator/commit/b514c1965f5aac0b2ce84db5e1cd060bc72ebe9f)]
 ### New shortcuts:
 In text edit area:
 - (ctrl+P) Pyphen
-- (ctrl+M) Upper case
+- (ctrl+M) Upper case [[dc8ce63](https://github.com/dmMaze/BallonsTranslator/commit/dc8ce638377aa8a3967294ead890c10c78a6250c)]
 
 In canvas:
-- (ctrl+L) Auto layout
-- (ctrl+J) Squeeze
-- (ctrl+R) Reset angle 
+- (ctrl+L) Auto layout [[c4d9367](https://github.com/dmMaze/BallonsTranslator/commit/c4d93672a968a21aede3ef4c6dfc409ff4fbc0c5)]
+- (ctrl+J) Squeeze [[809c6c1](https://github.com/dmMaze/BallonsTranslator/commit/809c6c1e36b4585099ec4d4a65d66f545344e044)]
+- (ctrl+R) Reset angle [[809c6c1](https://github.com/dmMaze/BallonsTranslator/commit/809c6c1e36b4585099ec4d4a65d66f545344e044)]
 
 > [!IMPORTANT]  
 > **如打算公开分享本工具的机翻结果，且没有有经验的译者进行过完整的翻译或校对，请在显眼位置注明机翻。**
