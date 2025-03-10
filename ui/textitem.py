@@ -486,14 +486,15 @@ class TextBlkItem(QGraphicsTextItem):
             cursor.setPosition(hit)
             self.setTextCursor(cursor)
 
-    def endEdit(self) -> None:
+    def endEdit(self, keep_focus=True) -> None:
         self.end_edit.emit(self.idx)
         cursor = self.textCursor()
         cursor.clearSelection()
         self.setTextCursor(cursor)
         self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         self.setCacheMode(QGraphicsItem.CacheMode.DeviceCoordinateCache)
-        self.setFocus()
+        if keep_focus:
+            self.setFocus()
 
     def isEditing(self) -> bool:
         return self.textInteractionFlags() == Qt.TextInteractionFlag.TextEditorInteraction

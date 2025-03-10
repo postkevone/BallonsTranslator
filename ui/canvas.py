@@ -372,8 +372,11 @@ class Canvas(QGraphicsScene):
 
         self.clearSelection()
         if self.textEditMode() and self.txtblkShapeControl.blk_item is not None:
-            if self.txtblkShapeControl.blk_item.is_editting():
-                self.txtblkShapeControl.blk_item.endEdit()
+            blk_item = self.txtblkShapeControl.blk_item
+            if blk_item.is_editting():
+                blk_item.endEdit(keep_focus=False)
+            if blk_item.isSelected():
+                blk_item.setSelected(False)
 
         result = ndarray2pixmap(self.imgtrans_proj.inpainted_array, return_qimg=True)
         canvas_sz = self.img_window_size()
