@@ -5,10 +5,10 @@
 - Boxes around text elements are only showed in edit mode (W). [[53a1002](https://github.com/dmMaze/BallonsTranslator/commit/53a100268d88d19db50ee74ae99861acc1251860)]
 - Inpaint brush size range reduced (from 1-1000 to 5-200) [[6cc41d0](https://github.com/dmMaze/BallonsTranslator/commit/6cc41d090bd4342795ad688561302cf0a8b7b37d)]
 - Better handle of focus and grouping inside the text edit panel. [[e6c61a8](https://github.com/dmMaze/BallonsTranslator/commit/e6c61a8169a538183e77ce168cb097d53ed9b745), [93101c3](https://github.com/dmMaze/BallonsTranslator/commit/93101c30e670bcae911184b41c410496d4c54d26), [df4b608](https://github.com/dmMaze/BallonsTranslator/commit/df4b60839b9c01abf7e5e4b548cfa7c90ad2218e), [b7600d3](https://github.com/dmMaze/BallonsTranslator/commit/b7600d32e9b5fd0e6fccf7b24b4236858f13ea15)]
-- Code improvements and crash fixes. [[21a4b93](https://github.com/dmMaze/BallonsTranslator/commit/21a4b931d885136b9110911a5d674e15434eda53), [883f3f9](https://github.com/dmMaze/BallonsTranslator/commit/883f3f9e31984ec7d51d2ed08295ec4b4847e036), [4cf4aca](https://github.com/dmMaze/BallonsTranslator/commit/4cf4acaea40c8b7a817c61bf1405cf9211711756), [b514c19](https://github.com/dmMaze/BallonsTranslator/commit/b514c1965f5aac0b2ce84db5e1cd060bc72ebe9f)]
+- Code improvements and crash fixes. [[21a4b93](https://github.com/dmMaze/BallonsTranslator/commit/21a4b931d885136b9110911a5d674e15434eda53), [883f3f9](https://github.com/dmMaze/BallonsTranslator/commit/883f3f9e31984ec7d51d2ed08295ec4b4847e036), [4cf4aca](https://github.com/dmMaze/BallonsTranslator/commit/4cf4acaea40c8b7a817c61bf1405cf9211711756), [b514c19](https://github.com/dmMaze/BallonsTranslator/commit/b514c1965f5aac0b2ce84db5e1cd060bc72ebe9f), [0e7ef4c](https://github.com/dmMaze/BallonsTranslator/commit/0e7ef4c1b5973a50e9ad201d41ca460c4849dca8), [95ba0e5](https://github.com/dmMaze/BallonsTranslator/commit/95ba0e53f7d13243064af40344eaf90ace15c889)]
 ### New shortcuts:
 In text edit area:
-- (ctrl+P) Pyphen
+- (ctrl+P) Pyphen [[3c3b9bd](https://github.com/dmMaze/BallonsTranslator/commit/3c3b9bd7b9119b9d4b293b86dd2af4e627ac106f)]
 - (ctrl+M) Upper case [[dc8ce63](https://github.com/dmMaze/BallonsTranslator/commit/dc8ce638377aa8a3967294ead890c10c78a6250c)]
 
 In canvas:
