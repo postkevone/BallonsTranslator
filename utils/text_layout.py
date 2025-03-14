@@ -195,6 +195,7 @@ def layout_lines_aligncenter(
             pos_y = centroid_y - int(blk.bounding_rect()[3] / 2)
         else:
             pos_y = centroid_y + line_height // 2
+        pos_y = max(0, min(pos_y, mask.shape[0] - 1)) #IndexError: index 239 is out of bounds for axis 0 with size 167
         top_mean = mask[pos_y, :].mean()
         x_mean = mask.mean(axis=1)
         base_mean = x_mean.max() / 2
