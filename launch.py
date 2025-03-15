@@ -4,11 +4,9 @@ import argparse
 import os.path as osp
 import os
 import importlib
-import re
 import subprocess
 import pkg_resources
 from platform import platform
-import logging
 
 BRANCH = 'dev'
 VERSION = '1.4.0'
@@ -109,30 +107,6 @@ def commit_hash():
     return stored_commit_hash
 
 
-def load_modules():
-    LOGGER = logging.getLogger('BallonTranslator')
-    def _load_module(module_dir: str, module_pattern: str):
-        modules = os.listdir(module_dir)
-        pattern = re.compile(module_pattern)
-        module_path = module_dir.replace('/', '.')
-        if not module_path.endswith('.'):
-            module_path += '.'
-        for module_name in modules:
-            if pattern.match(module_name) is not None:
-                try:
-                    module = module_path + module_name.replace('.py', '')
-                    importlib.import_module(module)
-                except Exception as e:
-                    LOGGER.warning(f'Failed to import {module}: {e}')
-
-    for kwargs in [
-        {'module_dir': 'modules/translators', 'module_pattern': r'trans_(.*?).py'},
-        {'module_dir': 'modules/textdetector', 'module_pattern': r'detector_(.*?).py'},
-        {'module_dir': 'modules/inpaint', 'module_pattern': r'inpaint_(.*?).py'},
-        {'module_dir': 'modules/ocr', 'module_pattern': r'ocr_(.*?).py'},
-    ]:
-        _load_module(**kwargs)
-
 BT = None
 APP = None
 
@@ -143,7 +117,6 @@ def restart():
         BT.close()
     os.execv(sys.executable, ['python'] + sys.argv)
 
-
 def main():
 
     if args.debug:
@@ -153,16 +126,19 @@ def main():
 
     commit = commit_hash()
 
-    print('py version: ', sys.version)
-    print('py executable: ', sys.executable)
-    print(f'version: {VERSION}')
-    print(f'branch: {BRANCH}')
+    print('Python version: ', sys.version)
+    print('Python executable: ', sys.executable)
+    print(f'Version: {VERSION}')
+    print(f'Branch: {BRANCH}')
     print(f"Commit hash: {commit}")
 
     APP_DIR = os.path.dirname(os.path.abspath(__file__))
     os.chdir(APP_DIR)
 
     prepare_environment()
+
+    from utils.zluda_config import enable_zluda_config
+    enable_zluda_config()
 
     if args.update:
         if getattr(sys, 'frozen', False):
@@ -230,8 +206,9 @@ def main():
 
     setup_logging(shared.LOGGING_PATH)
 
-    load_modules()
+    from modules.base import load_modules
     from modules.prepare_local_files import prepare_local_files_forall
+    load_modules()
     prepare_local_files_forall()
 
     app_args = sys.argv

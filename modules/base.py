@@ -4,6 +4,8 @@ import time
 from typing import Dict, List, Callable, Union
 from copy import deepcopy
 from collections import OrderedDict
+import re
+import importlib
 
 from utils.logger import logger as LOGGER
 from utils import shared
@@ -220,3 +222,25 @@ TORCH_DTYPE_MAP = {
     'bf16': torch.bfloat16,
 }
     
+def load_modules():
+    def _load_module(module_dir: str, module_pattern: str):
+        modules = os.listdir(module_dir)
+        pattern = re.compile(module_pattern)
+        module_path = module_dir.replace('/', '.')
+        if not module_path.endswith('.'):
+            module_path += '.'
+        for module_name in modules:
+            if pattern.match(module_name) is not None:
+                try:
+                    module = module_path + module_name.replace('.py', '')
+                    importlib.import_module(module)
+                except Exception as e:
+                    LOGGER.warning(f'Failed to import {module}: {e}')
+
+    for kwargs in [
+        {'module_dir': 'modules/translators', 'module_pattern': r'trans_(.*?).py'},
+        {'module_dir': 'modules/textdetector', 'module_pattern': r'detector_(.*?).py'},
+        {'module_dir': 'modules/inpaint', 'module_pattern': r'inpaint_(.*?).py'},
+        {'module_dir': 'modules/ocr', 'module_pattern': r'ocr_(.*?).py'},
+    ]:
+        _load_module(**kwargs)
