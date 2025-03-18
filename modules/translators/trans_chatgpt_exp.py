@@ -32,7 +32,7 @@ class GPTTranslatorExp(BaseTranslator):
         'override model': '',
         'max tokens': 4096,
         'temperature': 0.5,
-        'top p': 1,
+        'top p': 1.,
         'retry attempts': 5,
         'retry timeout': 15,
         '3rd party api url': '',
@@ -84,7 +84,7 @@ class GPTTranslatorExp(BaseTranslator):
         return self.params['max tokens']
     
     @property
-    def top_p(self) -> int:
+    def top_p(self) -> float:
         return self.params['top p']
     
     @property
@@ -95,7 +95,7 @@ class GPTTranslatorExp(BaseTranslator):
     def retry_timeout(self) -> int:
         return self.params['retry timeout']
 
-    def _assemble_prompts(self, queries: List[str], from_lang: str = None, to_lang: str = None, max_tokens = None) -> List[str]:
+    def _assemble_prompts(self, queries: List[str], from_lang: str = None, to_lang: str = None, max_tokens = None):
         self.logger.debug("Assembling prompts...")
         if from_lang is None:
             from_lang = self.lang_map[self.lang_source]

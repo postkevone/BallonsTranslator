@@ -168,7 +168,6 @@ class TextAdvancedFormatPanel(PanelArea):
         opacity_layout.addWidget(self.opacity_label)
         opacity_layout.addWidget(self.opacity_box)
 
-
         # self.tate_chu_yoko_checker = QFontChecker()
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         self.scrollContent.after_resized.connect(self.adjuset_size)

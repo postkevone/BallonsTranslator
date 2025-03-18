@@ -1,16 +1,43 @@
 import math
-import numpy as np
+from functools import cached_property
 
+import numpy as np
 from qtpy.QtWidgets import QGraphicsPixmapItem, QGraphicsItem, QWidget, QGraphicsSceneHoverEvent, QLabel, QStyleOptionGraphicsItem, QGraphicsSceneMouseEvent, QGraphicsRectItem
 from qtpy.QtCore import Qt, QRect, QRectF, QPointF, QPoint
 from qtpy.QtGui import QPainter, QPen, QColor
-from utils.imgproc_utils import xywh2xyxypoly, rotate_polygons
-from typing import List, Union, Tuple
 
+from utils.imgproc_utils import xywh2xyxypoly, rotate_polygons
 from .cursor import rotateCursorList, resizeCursorList
 from .textitem import TextBlkItem
 
 CBEDGE_WIDTH = 30
+
+VISUALIZE_HITBOX = False
+ctrlidx_to_hitbox = {
+    0: [-0.75, -0.75, 0.75, 0.75],
+    1: [-0.5, -0.75, 1, 0.75],
+    2: [0., -0.75, 0.75, 0.75],
+    3: [0., -0.5, 0.75, 1],
+    4: [0., 0., 0.75, 0.75],
+    5: [-0.5, 0., 1, 0.75],
+    6: [-0.75, 0., 0.75, 0.75],
+    7: [-0.75, -0.5, 0.75, 1]
+}
+for k, v in ctrlidx_to_hitbox.items():
+    ctrlidx_to_hitbox[k] = np.array(v, dtype=np.float32)
+
+ctrlidx_to_visiblebox = {
+    0: [0.25, 0.25, 0.75, 0.75],
+    1: [0.25, 0.25, 0.75],
+    2: [0., 0.25, 0.75, 0.75],
+    3: [0., 0.25, 0.75, 1],
+    4: [0., 0., 0.75, 0.75],
+    5: [0.25, 0., 1, 0.75],
+    6: [0.25, 0., 0.75, 0.75],
+    7: [0.25, 0.25, 0.75, 1]
+}
+for k, v in ctrlidx_to_visiblebox.items():
+    ctrlidx_to_visiblebox[k] = np.array(v, dtype=np.float32)
 
 class ControlBlockItem(QGraphicsRectItem):
     DRAG_NONE = 0
@@ -27,14 +54,17 @@ class ControlBlockItem(QGraphicsRectItem):
         self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
         self.updateEdgeWidth(CBEDGE_WIDTH)
     
-    # make the resizing anchors smaller
     def updateEdgeWidth(self, edge_width: float, scale_factor=0.8):
         self.edge_width = edge_width * scale_factor
-        self.visible_len = self.edge_width // 2 * scale_factor
+        self.visible_len = self.edge_width / 2 * scale_factor
+        self.block_shift_value = self.edge_width * 0.75 * scale_factor
         self.pen_width = edge_width / CBEDGE_WIDTH * 2 * scale_factor
-        offset = self.edge_width // 4 + self.pen_width / 2 * scale_factor
-        self.visible_rect = QRectF(offset, offset, self.visible_len, self.visible_len)
-        self.setRect(0, 0, self.edge_width, self.edge_width)
+        offset = self.edge_width * ctrlidx_to_visiblebox[self.idx]
+        self.visible_rect = QRectF(offset[0], offset[1], self.visible_len, self.visible_len)
+        hitbox = ctrlidx_to_hitbox[self.idx]
+        w = hitbox[2] * self.edge_width
+        h = hitbox[3] * self.edge_width
+        self.setRect(0, 0, w, h)
 
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget) -> None:
         rect = QRectF(self.visible_rect)
@@ -42,6 +72,9 @@ class ControlBlockItem(QGraphicsRectItem):
         painter.setPen(QPen(QColor(75, 75, 75, 125), self.pen_width, Qt.PenStyle.SolidLine, Qt.SquareCap)) # change the opacity level of the square used to resize a text box
         painter.fillRect(rect, QColor(200, 200, 200, 0))
         painter.drawRect(rect)
+        if VISUALIZE_HITBOX:
+            painter.setPen(QPen(QColor(75, 125, 0), self.pen_width, Qt.PenStyle.SolidLine, Qt.SquareCap))
+            painter.drawRect(self.boundingRect())
 
     def hoverEnterEvent(self, event: QGraphicsSceneHoverEvent) -> None:        
         return super().hoverEnterEvent(event)
@@ -109,7 +142,6 @@ class ControlBlockItem(QGraphicsRectItem):
         blk_item = self.ctrl.blk_item
         if blk_item is None:
             return
-
         if self.drag_mode == self.DRAG_RESHAPE:    
             block_group = self.ctrl.ctrlblock_group
             crect = self.ctrl.rect()
@@ -120,36 +152,36 @@ class ControlBlockItem(QGraphicsRectItem):
                 if self.idx == 0:
                     pos_x = min(self.pos().x(), oppo_pos.x())
                     pos_y = min(self.pos().y(), oppo_pos.y())
-                    crect.setX(pos_x+self.visible_len)
-                    crect.setY(pos_y+self.visible_len)
+                    crect.setX(pos_x + self.block_shift_value)
+                    crect.setY(pos_y + self.block_shift_value)
                 elif self.idx == 2:
                     pos_x = max(self.pos().x(), oppo_pos.x())
                     pos_y = min(self.pos().y(), oppo_pos.y())
-                    crect.setWidth(pos_x-oppo_pos.x())
-                    crect.setY(pos_y+self.visible_len)
+                    crect.setWidth(pos_x - oppo_pos.x() - self.block_shift_value)
+                    crect.setY(pos_y+self.block_shift_value)
                 elif self.idx == 4:
                     pos_x = max(self.pos().x(), oppo_pos.x())
                     pos_y = max(self.pos().y(), oppo_pos.y())
-                    crect.setWidth(pos_x-oppo_pos.x())
-                    crect.setHeight(pos_y-oppo_pos.y())
+                    crect.setWidth(pos_x-oppo_pos.x() - self.block_shift_value)
+                    crect.setHeight(pos_y-oppo_pos.y() - self.block_shift_value)
                 else:   # idx == 6
                     pos_x = min(self.pos().x(), oppo_pos.x())
                     pos_y = max(self.pos().y(), oppo_pos.y())
-                    crect.setX(pos_x+self.visible_len)
-                    crect.setHeight(pos_y-oppo_pos.y())
+                    crect.setX(pos_x+self.block_shift_value)
+                    crect.setHeight(pos_y-oppo_pos.y() - self.block_shift_value)
             else:
                 if self.idx == 1:
                     pos_y = min(self.pos().y(), oppo_pos.y())
-                    crect.setY(pos_y+self.visible_len)
+                    crect.setY(pos_y+self.block_shift_value)
                 elif self.idx == 3:
                     pos_x = max(self.pos().x(), oppo_pos.x())
-                    crect.setWidth(pos_x-oppo_pos.x())
+                    crect.setWidth(pos_x-oppo_pos.x() - self.block_shift_value)
                 elif self.idx == 5:
                     pos_y = max(self.pos().y(), oppo_pos.y())
-                    crect.setHeight(pos_y-oppo_pos.y())
+                    crect.setHeight(pos_y-oppo_pos.y() - self.block_shift_value)
                 else:   # idx == 7
                     pos_x = min(self.pos().x(), oppo_pos.x())
-                    crect.setX(pos_x+self.visible_len)
+                    crect.setX(pos_x+self.block_shift_value)
             
             self.ctrl.setRect(crect)
             scale = self.ctrl.current_scale
@@ -257,7 +289,8 @@ class TextBlkShapeControl(QGraphicsRectItem):
         for ii, ctrlblock in enumerate(self.ctrlblock_group):
             is_corner = not ii % 2
             idx = ii // 2
-            pos = pnts[is_corner][idx] -0.5 * ctrlblock.edge_width
+            hitbox_xy = ctrlidx_to_hitbox[ii][:2]
+            pos = pnts[is_corner][idx] + hitbox_xy * ctrlblock.edge_width
             ctrlblock.setPos(pos[0], pos[1])
 
     def setAngle(self, angle: int) -> None:

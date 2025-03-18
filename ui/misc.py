@@ -72,34 +72,6 @@ def ndarray2pixmap(img, return_qimg=False):
     return QPixmap(qImg)
 
 
-class ProjectDirNotExistException(Exception):
-    pass
-
-class ProjectLoadFailureException(Exception):
-    pass
-
-class ProjectNotSupportedException(Exception):
-    pass
-
-class ImgnameNotInProjectException(Exception):
-    pass
-
-class NotImplementedProjException(Exception):
-    pass
-
-class InvalidModuleConfigException(Exception):
-    pass
-
-class InvalidProgramConfigException(Exception):
-    pass
-
-
-class ProjHardSubExtract:
-    def __init__(self):
-        self.type = 'hardsubextract'
-        raise NotImplementedProjException('hardsubextract')
-
-
 class LruIgnoreArg:
 
     def __init__(self, **kwargs) -> None:

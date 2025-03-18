@@ -7,12 +7,12 @@ import os.path as osp
 from typing import Tuple, Union, List, Dict
 from PIL import Image
 
-from utils.logger import logger as LOGGER
-from utils.io_utils import find_all_imgs, imread, imwrite, NumpyEncoder
-from utils.textblock import TextBlock, FontFormat
-from utils.config import pcfg
-from utils import shared
-from .misc import ImgnameNotInProjectException, ProjectLoadFailureException, ProjectDirNotExistException, ProjectNotSupportedException
+from .logger import logger as LOGGER
+from .io_utils import find_all_imgs, imread, imwrite, NumpyEncoder
+from .textblock import TextBlock, FontFormat
+from .config import pcfg
+from . import shared
+from .exceptions import ImgnameNotInProjectException, ProjectLoadFailureException, ProjectDirNotExistException, ProjectNotSupportedException
 
 
 def write_jpg_metadata(imgpath: str, metadata="a metadata"):

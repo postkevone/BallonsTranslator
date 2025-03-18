@@ -12,9 +12,9 @@ from utils.config import pcfg
 from .custom_widget import ProgressMessageBox, Widget, NoBorderPushBtn
 from .textitem import TextBlkItem, TextBlock
 from .textedit_area import TransPairWidget, SourceTextEdit
-from .config_proj import ProjImgTrans
 from .io_thread import ThreadBase
 from utils import shared as C
+from utils.proj_imgtrans import ProjImgTrans
 
 SEARCHRST_FONTSIZE = 10.3
 

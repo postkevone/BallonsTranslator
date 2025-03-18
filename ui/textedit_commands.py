@@ -14,7 +14,7 @@ import utils.config as C
 from .misc import doc_replace, doc_replace_no_shift
 from .texteditshapecontrol import TextBlkShapeControl
 from .page_search_widget import PageSearchWidget, Matched
-from .config_proj import ProjImgTrans
+from utils.proj_imgtrans import ProjImgTrans
 from .scene_textlayout import PUNSET_HALF
 
 

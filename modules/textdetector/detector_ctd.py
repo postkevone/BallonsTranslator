@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Tuple, List
 
-from .base import register_textdetectors, TextDetectorBase, TextBlock, DEFAULT_DEVICE, DEVICE_SELECTOR
+from .base import register_textdetectors, TextDetectorBase, TextBlock, DEFAULT_DEVICE, DEVICE_SELECTOR, ProjImgTrans
 from .ctd import CTDModel
 
 CTD_ONNX_PATH = 'data/models/comictextdetector.pt.onnx'
@@ -27,7 +27,10 @@ class ComicTextDetector(TextDetectorBase):
             'value': 4
         },
         'device': DEVICE_SELECTOR(),
-        'description': 'ComicTextDetector'
+        'description': 'ComicTextDetector',
+        'font size multiplier': 1.,
+        'font size max': -1,
+        'font size min': -1,
     }
     _load_model_keys = {'model'}
     download_file_list = [{
@@ -57,8 +60,21 @@ class ComicTextDetector(TextDetectorBase):
         else:
             self.model = load_ctd_model(CTD_ONNX_PATH, self.device, self.detect_size)
 
-    def _detect(self, img: np.ndarray) -> Tuple[np.ndarray, List[TextBlock]]:
+    def _detect(self, img: np.ndarray, proj: ProjImgTrans) -> Tuple[np.ndarray, List[TextBlock]]:
         _, mask, blk_list = self.model(img)
+        
+        fnt_rsz = self.get_param_value('font size multiplier')
+        fnt_max = self.get_param_value('font size max')
+        fnt_min = self.get_param_value('font size min')
+        for blk in blk_list:
+            sz = blk._detected_font_size * fnt_rsz
+            if fnt_max > 0:
+                sz = min(fnt_max, sz)
+            if fnt_min > 0:
+                sz = max(fnt_min, sz)
+            blk.font_size = sz
+            blk._detected_font_size = sz
+
         return mask, blk_list
 
     def updateParam(self, param_key: str, param_content):

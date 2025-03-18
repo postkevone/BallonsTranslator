@@ -5,7 +5,7 @@ from qtpy.QtCore import Signal, Qt
 from qtpy.QtGui import QDoubleValidator
 
 from utils.shared import CONFIG_COMBOBOX_LONG, CONFIG_COMBOBOX_MIDEAN, CONFIG_COMBOBOX_SHORT, CONFIG_COMBOBOX_HEIGHT
-
+from .push_button import NoBorderPushBtn
 
 
 class ComboBox(QComboBox):
@@ -60,7 +60,9 @@ class ConfigComboBox(ComboBox):
 
 class ParamComboBox(ComboBox):
     paramwidget_edited = Signal(str, str)
-    def __init__(self, param_key: str, options: List[str], size=CONFIG_COMBOBOX_SHORT, scrollWidget: QWidget = None, *args, **kwargs) -> None:
+    flushbtn_clicked = Signal()
+    pathbtn_clicked = Signal()
+    def __init__(self, param_key: str, options: List[str], size=CONFIG_COMBOBOX_SHORT, scrollWidget: QWidget = None, flush_btn: bool = False, path_selector: bool = False, *args, **kwargs) -> None:
         super().__init__(scrollWidget=scrollWidget, *args, **kwargs)
         self.param_key = param_key
         self.setFixedWidth(size)
@@ -68,6 +70,13 @@ class ParamComboBox(ComboBox):
         options = [str(opt) for opt in options]
         self.addItems(options)
         self.currentTextChanged.connect(self.on_select_changed)
+        
+        if flush_btn:
+            self.flush_btn = NoBorderPushBtn(self.tr('Flush'))
+            self.flush_btn.clicked.connect(self.flushbtn_clicked)
+        if path_selector:
+            self.path_select_btn = NoBorderPushBtn(self.tr('Select Path'))
+            self.path_select_btn.clicked.connect(self.pathbtn_clicked)
 
     def on_select_changed(self):
         self.paramwidget_edited.emit(self.param_key, self.currentText())

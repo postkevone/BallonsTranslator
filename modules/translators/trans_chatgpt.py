@@ -69,7 +69,7 @@ class GPTTranslator(BaseTranslator):
         'delay': 0.3,
         'max tokens': 4096,
         'temperature': 0.5,
-        'top p': 1,
+        'top p': 1.,
         # 'return prompt': False,
         'retry attempts': 5,
         'retry timeout': 15,
@@ -124,7 +124,7 @@ class GPTTranslator(BaseTranslator):
         return self.params['max tokens']
     
     @property
-    def top_p(self) -> int:
+    def top_p(self) -> float:
         return self.params['top p']
     
     @property
@@ -167,7 +167,7 @@ class GPTTranslator(BaseTranslator):
         else:
             return None
 
-    def _assemble_prompts(self, queries: List[str], from_lang: str = None, to_lang: str = None, max_tokens = None) -> List[str]:
+    def _assemble_prompts(self, queries: List[str], from_lang: str = None, to_lang: str = None, max_tokens = None):
         if from_lang is None:
             from_lang = self.lang_map[self.lang_source]
         if to_lang is None:

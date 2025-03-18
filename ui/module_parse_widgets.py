@@ -4,7 +4,7 @@ from modules import GET_VALID_INPAINTERS, GET_VALID_TEXTDETECTORS, GET_VALID_TRA
     BaseTranslator, DEFAULT_DEVICE, GPUINTENSIVE_SET
 from utils.logger import logger as LOGGER
 from .custom_widget import ConfigComboBox, ParamComboBox, NoBorderPushBtn, ParamNameLabel
-from utils.shared import CONFIG_FONTSIZE_CONTENT, CONFIG_COMBOBOX_MIDEAN, CONFIG_COMBOBOX_LONG, CONFIG_COMBOBOX_SHORT, CONFIG_COMBOBOX_HEIGHT
+from utils.shared import CONFIG_COMBOBOX_LONG, size2width, CONFIG_COMBOBOX_SHORT, CONFIG_COMBOBOX_HEIGHT
 from utils.config import pcfg
 
 from qtpy.QtWidgets import QPlainTextEdit, QHBoxLayout, QVBoxLayout, QWidget, QLabel, QCheckBox, QLineEdit, QGridLayout, QPushButton
@@ -12,13 +12,37 @@ from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QDoubleValidator
 
 
+class ParamCheckGroup(QWidget):
+
+    paramwidget_edited = Signal(str, dict)
+
+    def __init__(self, param_key, check_group: dict, parent=None) -> None:
+        super().__init__(parent=parent)
+        self.param_key = param_key
+        layout = QHBoxLayout(self)
+        self.label2widget = {}
+        for k, v in check_group.items():
+            checker = QCheckBox(text=k, parent=self)
+            checker.setChecked(v)
+            layout.addWidget(checker)
+            self.label2widget[k] = checker
+            checker.clicked.connect(self.on_checker_clicked)
+
+    def on_checker_clicked(self):
+        new_state_dict = {}
+        w = QCheckBox()
+        for k, w in self.label2widget.items():
+            new_state_dict[k] = w.isChecked()
+        self.paramwidget_edited.emit(self.param_key, new_state_dict)
+
+
 class ParamLineEditor(QLineEdit):
     
     paramwidget_edited = Signal(str, str)
-    def __init__(self, param_key: str, force_digital, *args, **kwargs) -> None:
+    def __init__(self, param_key: str, force_digital, size='short', *args, **kwargs) -> None:
         super().__init__( *args, **kwargs)
         self.param_key = param_key
-        self.setFixedWidth(CONFIG_COMBOBOX_MIDEAN)
+        self.setFixedWidth(size2width(size))
         self.setFixedHeight(CONFIG_COMBOBOX_HEIGHT)
         self.textChanged.connect(self.on_text_changed)
 
@@ -130,7 +154,7 @@ class ParamWidget(QWidget):
             require_label = True
             is_str = isinstance(params[param_key], str)
             is_digital = isinstance(params[param_key], float) or isinstance(params[param_key], int)
-            param_widget = None  # Инициализация переменной
+            param_widget = None
 
             if isinstance(params[param_key], bool):
                 param_widget = ParamCheckBox(param_key)
@@ -152,14 +176,17 @@ class ParamWidget(QWidget):
                 value = params[param_key]['value']
                 param_widget = None  # Ensure initialization
                 param_type = param_dict['type'] if 'type' in param_dict else 'line_editor'
-
+                flush_btn = param_dict.get('flush_btn', False)
+                path_selector = param_dict.get('path_selector', False)
+                param_size = param_dict.get('size', 'short')
                 if param_type == 'selector':
                     if 'url' in param_key:
-                        size = CONFIG_COMBOBOX_MIDEAN
+                        size = size2width('median')
                     else:
-                        size = CONFIG_COMBOBOX_SHORT
+                        size = size2width(param_size)
 
-                    param_widget = ParamComboBox(param_key, param_dict['options'], size=size, scrollWidget=scrollWidget)
+                    param_widget = ParamComboBox(
+                        param_key, param_dict['options'], size=size, scrollWidget=scrollWidget, flush_btn=flush_btn, path_selector=path_selector)
 
                     if param_key == 'device' and DEFAULT_DEVICE == 'cpu':
                         param_dict['value'] = 'cpu'
@@ -169,6 +196,7 @@ class ParamWidget(QWidget):
                                 item = model.item(ii, 0)
                                 item.setEnabled(False)
                     param_widget.setCurrentText(str(value))
+                    param_widget.setEditable(param_dict.get('editable', False))
 
                 elif param_type == 'editor':
                     param_widget = ParamEditor(param_key)
@@ -189,6 +217,9 @@ class ParamWidget(QWidget):
                     param_widget = ParamLineEditor(param_key, force_digital=is_digital)
                     param_widget.setText(str(value))
 
+                elif param_type == 'check_group':
+                    param_widget = ParamCheckGroup(param_key, check_group=value)
+
                 if param_widget is not None:
                     param_widget.paramwidget_edited.connect(self.on_paramwidget_edited)
                     if 'description' in param_dict:
@@ -200,9 +231,32 @@ class ParamWidget(QWidget):
                 param_layout.addWidget(param_label, ii, 0)
                 widget_idx = 1
             if param_widget:
-                param_layout.addWidget(param_widget, ii, widget_idx)
+                pw_lo = None
+                if hasattr(param_widget, 'flush_btn') or hasattr(param_widget, 'path_select_btn'):
+                    pw_lo = QHBoxLayout()
+                    pw_lo.addWidget(param_widget)
+                if hasattr(param_widget, 'flush_btn'):
+                    pw_lo.addWidget(param_widget.flush_btn)
+                    param_widget.flushbtn_clicked.connect(self.on_flushbtn_clicked)
+                if hasattr(param_widget, 'path_select_btn'):
+                    pw_lo.addWidget(param_widget.path_select_btn)
+                    param_widget.pathbtn_clicked.connect(self.on_pathbtn_clicked)
+                if pw_lo is None:
+                    param_layout.addWidget(param_widget, ii, widget_idx)
+                else:
+                    param_layout.addLayout(pw_lo, ii, widget_idx)
             else:
                 raise ValueError(f"Failed to initialize widget for key: {param_key}")
+            
+    def on_flushbtn_clicked(self):
+        paramw: ParamComboBox = self.sender()
+        content_dict = {'content': '', 'widget': paramw, 'flush': True}
+        self.paramwidget_edited.emit(paramw.param_key, content_dict)
+
+    def on_pathbtn_clicked(self):
+        paramw: ParamComboBox = self.sender()
+        content_dict = {'content': '', 'widget': paramw, 'select_path': True}
+        self.paramwidget_edited.emit(paramw.param_key, content_dict)
 
     def on_paramwidget_edited(self, param_key, param_content):
         content_dict = {'content': param_content}
@@ -385,7 +439,9 @@ class TextDetectConfigPanel(ModuleConfigParseWidget):
         super().__init__(module_name, GET_VALID_TEXTDETECTORS, scrollWidget = scrollWidget, *args, **kwargs)
         self.detector_changed = self.module_changed
         self.setDetector = self.setModule
-
+        self.keep_existing_checker = QCheckBox(text=self.tr('Keep Existing Lines'))
+        self.p_layout.insertWidget(2, self.keep_existing_checker)
+        
 
 class OCRConfigPanel(ModuleConfigParseWidget):
     def __init__(self, module_name: str, scrollWidget: QWidget = None, *args, **kwargs) -> None:

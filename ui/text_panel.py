@@ -417,7 +417,7 @@ class FontFormatPanel(Widget):
         self.vlayout.addLayout(hl2)
         self.vlayout.addLayout(hl3)
         self.vlayout.addLayout(hl4)
-        self.vlayout.setContentsMargins(7, 0, 7, 0)
+        self.vlayout.setContentsMargins(0, 0, 7, 0)
         self.vlayout.setSpacing(0)
 
         self.focusOnColorDialog = False

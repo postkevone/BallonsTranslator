@@ -4,7 +4,7 @@ from typing import Tuple, List
 import requests
 import base64
 
-from .base import register_textdetectors, TextDetectorBase, TextBlock
+from .base import register_textdetectors, TextDetectorBase, TextBlock, ProjImgTrans
 from utils import create_error_dialog, create_info_dialog
 
 import json
@@ -143,7 +143,7 @@ class StariverDetector(TextDetectorBase):
             new_font_size = int(new_font_size * self.font_size_multiplier)
         return new_font_size
 
-    def detect(self, img: np.ndarray) -> Tuple[np.ndarray, List[TextBlock]]:
+    def _detect(self, img: np.ndarray, proj: ProjImgTrans = None) -> Tuple[np.ndarray | List[TextBlock]]:
         self.update_token_if_needed()  # 在向服务器发送请求前尝试更新 Token
         if not self.token or self.token == '':
             self.logger.error(

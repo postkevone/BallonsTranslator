@@ -1,8 +1,10 @@
 import time
 from typing import Union, List, Dict, Callable
+import os.path as osp
 
 import numpy as np
 from qtpy.QtCore import QThread, Signal, QObject, QLocale, QTimer
+from qtpy.QtWidgets import QFileDialog
 
 from .funcmaps import get_maskseg_method
 from utils.logger import logger as LOGGER
@@ -16,12 +18,12 @@ from modules import INPAINTERS, TRANSLATORS, TEXTDETECTORS, OCR, \
     BaseTranslator, InpainterBase, TextDetectorBase, OCRBase
 import modules
 modules.translators.SYSTEM_LANG = QLocale.system().name()
-from modules.textdetector import TextBlock
+from utils.textblock import TextBlock, sort_regions
 from utils import shared
 from utils import create_error_dialog, create_info_dialog, connect_once
-from .custom_widget import ImgtransProgressMessageBox
+from .custom_widget import ImgtransProgressMessageBox, ParamComboBox
 from .configpanel import ConfigPanel
-from .config_proj import ProjImgTrans
+from utils.proj_imgtrans import ProjImgTrans
 from utils.config import pcfg
 cfg_module = pcfg.module
 
@@ -362,7 +364,7 @@ class ImgtransThread(QThread):
             blk_removed: List[TextBlock] = []
             if cfg_module.enable_detect:
                 try:
-                    mask, blk_list = self.textdetector.detect(img)
+                    mask, blk_list = self.textdetector.detect(img, self.imgtrans_proj)
                     if self.mask_postprocess is not None:
                         mask = self.mask_postprocess(mask)
                     need_save_mask = True
@@ -371,6 +373,13 @@ class ImgtransThread(QThread):
                     blk_list = []
                 self.detect_counter += 1
                 self.update_detect_progress.emit(self.detect_counter)
+                if pcfg.module.keep_exist_textlines:
+                    blk_list = self.imgtrans_proj.pages[imgname] + blk_list
+                    blk_list = sort_regions(blk_list)
+                    existed_mask = self.imgtrans_proj.load_mask_by_imgname(imgname)
+                    if existed_mask is not None:
+                        mask = np.bitwise_or(mask, existed_mask)
+                    print(len(blk_list), len(self.imgtrans_proj.pages[imgname]))
                 self.imgtrans_proj.pages[imgname] = blk_list
 
             if blk_list is None:
@@ -518,40 +527,35 @@ def merge_config_module_params(config_params: Dict, module_keys: List, get_modul
 
             for mk in module_key_set:
                 if mk not in cfg_key_set:
-                    LOGGER.info(f'Found new {module_key} config: {mk}')
+                    # LOGGER.info(f'Found new {module_key} config: {mk}')
                     cfg_param[mk] = module_params[mk]
                 else:
                     mparam = module_params[mk]
                     cparam = cfg_param[mk]
                     if isinstance(mparam, dict):
-                        if 'type' in mparam and mparam['type'] == 'selector' \
-                            and cfg_param[mk]['options'] != mparam['options']:
-                            LOGGER.info(f'Update {mk} options')
-                            cfg_param[mk]['options'] = mparam['options']
-                        if 'type' in mparam and mparam['type'] != cparam['type']:
-                            cparam['type'] = mparam['type']
-                        for k in mparam:
-                            if k not in cparam:
-                                cparam[k] = mparam[k]
-                        deprecated_val_keys = {'select', 'content'}
-                        for k in list(cparam.keys()):
-                            if k in deprecated_val_keys:
-                                val = cparam.pop(k)
-                                if cparam['type'] == 'checkbox' and isinstance(val, str):
-                                    val = val.lower().strip() == 'true'
-                                cparam['value'] = val
-                                continue
-                            if k not in mparam:
-                                cparam.pop(k)
-                        if type(cparam['value']) != type(mparam['value']):
+                        tgt_type = type(mparam['value'])
+                        if isinstance(cparam, dict):
+                            if 'value' in cparam:
+                                v = cparam['value']
+                            elif isinstance(mparam['value'], dict):
+                                for k in mparam['value']:
+                                    if k in cparam:
+                                        mparam['value'][k] = cparam[k]
+                                v = mparam['value']
+                            else:
+                                v = mparam['value']
+                        else:
+                            v = cparam
+                        valid = True
+                        if tgt_type != type(v):
                             try:
-                                cparam['value'] = type(mparam['value'])(cparam['value'])
+                                v = tgt_type(v)
                             except:
-                                dtype = type(mparam['value'])
-                                mv = mparam['value']
-                                cv = cparam['value']
-                                LOGGER.warning(f'Invalid param value {cv} for defined dtype: {dtype}, it will be set to default value: {mv}')
-                                cparam['value'] = mv
+                                valid = False
+                                LOGGER.warning(f'Invalid param value {v} for defined dtype: {tgt_type}, it will be set to default value: {mparam}')
+                        if valid:
+                            mparam['value'] = v
+                        cfg_param[mk] = mparam
                     else:
                         if type(cparam) != type(mparam):
                             if not isinstance(mparam, dict) and isinstance(cparam, dict):
@@ -574,7 +578,6 @@ def merge_config_module_params(config_params: Dict, module_keys: List, get_modul
 
 
 def unload_modules(self, module_names):
-    import torch
     model_deleted = False
     for module in module_names:
         module: BaseModule = getattr(self, module)
@@ -969,8 +972,24 @@ class ModuleManager(QObject):
     def updateModuleSetupParam(self, 
                                module: Union[InpainterBase, BaseTranslator],
                                param_key: str, param_content: dict):
-            param_content = param_content['content']
-            module.updateParam(param_key, param_content)
+            
+        if param_content.get('flush', False):
+            param_widget: ParamComboBox = param_content['widget']
+            param_widget.blockSignals(True)
+            current_item = param_widget.currentText()
+            param_widget.clear()
+            param_widget.addItems(module.flush(param_key))
+            param_widget.setCurrentText(current_item)
+            param_widget.blockSignals(False)
+        elif param_content.get('select_path', False):
+            dialog = QFileDialog()
+            f = module.params[param_key].get('path_filter', None)
+            p = dialog.getOpenFileUrl(self.parent(), filter=f)[0].toLocalFile()
+            if osp.exists(p):
+                param_widget: ParamComboBox = param_content['widget']
+                param_widget.setCurrentText(p)
+        else:
+            module.updateParam(param_key, param_content['content'])
 
     def handle_page_changed(self):
         if not self.imgtrans_thread.isRunning():

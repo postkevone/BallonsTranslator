@@ -29,6 +29,16 @@ CONFIG_COMBOBOX_SHORT = 200
 CONFIG_COMBOBOX_MIDEAN = 332
 CONFIG_COMBOBOX_LONG = 468
 
+_size2width = {
+    'short': CONFIG_COMBOBOX_SHORT,
+    'median': CONFIG_COMBOBOX_MIDEAN,
+    'long':CONFIG_COMBOBOX_LONG
+}
+
+def size2width(size: str):
+    global _size2width
+    return _size2width[size]
+
 HORSLIDER_FIXHEIGHT = 36
 
 WIDGET_SPACING_CLOSE = 8

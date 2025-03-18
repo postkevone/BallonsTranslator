@@ -9,7 +9,7 @@ from qtpy.QtWidgets import QDialog, QMessageBox, QFileDialog
 from utils.logger import logger as LOGGER
 from utils.io_utils import imread, imwrite
 from utils import create_error_dialog
-from .config_proj import ProjImgTrans
+from utils.proj_imgtrans import ProjImgTrans
 from .custom_widget import ProgressMessageBox
 
 

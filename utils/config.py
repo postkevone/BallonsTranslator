@@ -1,11 +1,12 @@
 import json, os, traceback
 import os.path as osp
+import copy
 
 from . import shared
 from .fontformat import FontFormat
 from .structures import List, Dict, Config, field, nested_dataclass
 from .logger import logger as LOGGER
-from .io_utils import json_dump_nested_obj
+from .io_utils import json_dump_nested_obj, np, serialize_np
 
 
 @nested_dataclass
@@ -15,6 +16,7 @@ class ModuleConfig(Config):
     inpainter: str = 'lama_large_512px'
     translator: str = "google"
     enable_detect: bool = True
+    keep_exist_textlines: bool = False
     enable_ocr: bool = True
     enable_translate: bool = True
     enable_inpaint: bool = True
@@ -28,8 +30,33 @@ class ModuleConfig(Config):
     load_model_on_demand: bool = False
     empty_runcache: bool = False
 
-    def get_params(self, module_key: str) -> dict:
-        return self[module_key + '_params']
+    def get_params(self, module_key: str, for_saving=False) -> dict:
+        d = self[module_key + '_params']
+        if not for_saving:
+            return d
+        sd = {}
+        for module_key, module_params in d.items():
+            if module_params is None:
+                continue
+            saving_module_params = {}
+            sd[module_key] = saving_module_params
+            for pk, pv in module_params.items():
+                if pk in {'description'}:
+                    continue
+                if isinstance(pv, dict):
+                    pv = pv['value']
+                saving_module_params[pk] = pv
+        return sd
+
+    def get_saving_params(self, to_dict=True):
+        params = copy.copy(self)
+        params.ocr_params = self.get_params('ocr', for_saving=True)
+        params.inpainter_params = self.get_params('inpainter', for_saving=True)
+        params.textdetector_params = self.get_params('textdetector', for_saving=True)
+        params.translator_params = self.get_params('translator', for_saving=True)
+        if to_dict:
+            return params.__dict__
+        return params
     
     def stage_enabled(self, idx: int):
         if idx == 0:
@@ -211,11 +238,22 @@ def load_config():
             LOGGER.info(f'New text style file created at {dp}.')
     load_textstyle_from(p)
 
+
+def json_dump_program_config(obj, **kwargs):
+    def _default(obj):
+        if isinstance(obj, (np.ndarray, np.ScalarType)):
+            return serialize_np(obj)
+        elif isinstance(obj, ModuleConfig):
+            return obj.get_saving_params()
+        return obj.__dict__
+    return json.dumps(obj, default=lambda o: _default(o), ensure_ascii=False, **kwargs)
+
+
 def save_config():
     global pcfg
     try:
         with open(shared.CONFIG_PATH, 'w', encoding='utf8') as f:
-            f.write(json_dump_nested_obj(pcfg))
+            f.write(json_dump_program_config(pcfg))
         LOGGER.info('Config saved')
         return True
     except Exception as e:

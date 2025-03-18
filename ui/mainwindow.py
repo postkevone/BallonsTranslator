@@ -19,7 +19,7 @@ from utils import create_error_dialog, create_info_dialog
 from modules.translators.trans_chatgpt import GPTTranslator
 from .misc import parse_stylesheet, set_html_family, QKEY
 from utils.config import ProgramConfig, pcfg, save_config, text_styles, save_text_styles, load_textstyle_from, FontFormat
-from .config_proj import ProjImgTrans
+from utils.proj_imgtrans import ProjImgTrans
 from .canvas import Canvas
 from .configpanel import ConfigPanel
 from .module_manager import ModuleManager
@@ -1111,7 +1111,7 @@ class MainWindow(mainwindow_cls):
             self.set_display_lang(lang)
 
     def run_imgtrans(self):
-        if not self.imgtrans_proj.is_all_pages_no_text:
+        if not self.imgtrans_proj.is_all_pages_no_text and not pcfg.module.keep_exist_textlines:
             reply = QMessageBox.question(self, self.tr('Confirmation'),
                                          self.tr('Are you sure to run image translation again?\nAll existing translation results will be cleared!'),
                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -1133,7 +1133,8 @@ class MainWindow(mainwindow_cls):
         all_disabled = pcfg.module.all_stages_disabled()
         if pcfg.module.enable_detect:
             for page in self.imgtrans_proj.pages:
-                self.imgtrans_proj.pages[page].clear()
+                if not pcfg.module.keep_exist_textlines:
+                    self.imgtrans_proj.pages[page].clear()
         else:
             self.st_manager.updateTextBlkList()
             textblk: TextBlock = None

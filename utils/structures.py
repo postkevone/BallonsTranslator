@@ -1,6 +1,10 @@
-from typing import Tuple, List, ClassVar, Union, Any, Dict
+from typing import Tuple, List, ClassVar, Union, Any, Dict, Set
 from dataclasses import dataclass, field, is_dataclass
 import copy
+import os
+
+import numpy as np
+
 
 # decorator to wrap original __init__
 # https://www.geeksforgeeks.org/creating-nested-dataclass-objects-in-python/
@@ -44,6 +48,7 @@ def nested_dataclass(*args, **dataclass_kwargs):
       
     return wrapper(args[0]) if args else wrapper
 
+
 @dataclass
 class Config:
     
@@ -73,3 +78,7 @@ class Config:
 
     def copy(self):
         return copy.deepcopy(self)
+    
+
+MODULE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+BASE_PATH = os.path.dirname(MODULE_PATH)
