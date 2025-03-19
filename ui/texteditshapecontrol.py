@@ -54,11 +54,12 @@ class ControlBlockItem(QGraphicsRectItem):
         self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
         self.updateEdgeWidth(CBEDGE_WIDTH)
     
-    def updateEdgeWidth(self, edge_width: float, scale_factor=0.8):
-        self.edge_width = edge_width * scale_factor
-        self.visible_len = self.edge_width / 2 * scale_factor
-        self.block_shift_value = self.edge_width * 0.75 * scale_factor
-        self.pen_width = edge_width / CBEDGE_WIDTH * 2 * scale_factor
+    #resize squares size
+    def updateEdgeWidth(self, edge_width: float):
+        self.edge_width = edge_width * 0.5
+        self.visible_len = self.edge_width / 2
+        self.block_shift_value = self.edge_width * 0.75
+        self.pen_width = edge_width / CBEDGE_WIDTH * 2
         offset = self.edge_width * ctrlidx_to_visiblebox[self.idx]
         self.visible_rect = QRectF(offset[0], offset[1], self.visible_len, self.visible_len)
         hitbox = ctrlidx_to_hitbox[self.idx]
@@ -69,7 +70,7 @@ class ControlBlockItem(QGraphicsRectItem):
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget) -> None:
         rect = QRectF(self.visible_rect)
         rect.setTopLeft(self.boundingRect().topLeft()+rect.topLeft())
-        painter.setPen(QPen(QColor(75, 75, 75, 125), self.pen_width, Qt.PenStyle.SolidLine, Qt.SquareCap)) # change the opacity level of the square used to resize a text box
+        painter.setPen(QPen(QColor(30, 147, 229, 255), self.pen_width, Qt.PenStyle.SolidLine, Qt.SquareCap)) # change the opacity level of the square used to resize a text box
         painter.fillRect(rect, QColor(200, 200, 200, 0))
         painter.drawRect(rect)
         if VISUALIZE_HITBOX:
