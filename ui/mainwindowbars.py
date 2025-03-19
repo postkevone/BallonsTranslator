@@ -2,10 +2,11 @@ import os.path as osp
 from typing import List, Union
 
 from qtpy.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QFileDialog, QLabel, QSizePolicy, QToolBar, QMenu, QSpacerItem, QPushButton, QCheckBox, QToolButton
-from qtpy.QtCore import Qt, Signal, QPoint
-from qtpy.QtGui import QMouseEvent, QKeySequence, QActionGroup
+from qtpy.QtCore import Qt, Signal, QPoint, QEvent, QSize
+from qtpy.QtGui import QMouseEvent, QKeySequence, QActionGroup, QIcon
 
-from .custom_widget import Widget, PaintQSlider
+from modules.translators import BaseTranslator
+from .custom_widget import Widget, PaintQSlider, SmallComboBox, ConfigClickableLabel
 from utils.shared import TITLEBAR_HEIGHT, WINDOW_BORDER_WIDTH, BOTTOMBAR_HEIGHT, LEFTBAR_WIDTH, LEFTBTN_WIDTH
 from .framelesswindow import startSystemMove
 from utils.config import pcfg
@@ -29,50 +30,6 @@ class StatusButton(QPushButton):
 
 class TitleBarToolBtn(QToolButton):
     pass
-
-
-class RunStopTextBtn(StatusButton):
-    run_target = Signal(bool)
-    def __init__(self, run_text: str, stop_text: str, run_tool_tip: str = None, stop_tool_tip: str = None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.running = False
-        self.run_text = run_text
-        self.stop_text = stop_text
-        self.run_tool_tip = run_tool_tip
-        self.stop_tool_tip = stop_tool_tip
-        self.setRunText()
-        self.pressed.connect(self.on_pressed)
-
-    def on_pressed(self):
-        self.running = not self.running
-        if self.running:
-            self.setStopText()
-        else:
-            self.setRunText()
-        self.run_target.emit(self.running)
-
-    def setRunText(self):
-        self.setText(self.run_text)
-        if self.run_tool_tip is not None:
-            self.setToolTip(self.run_tool_tip)
-        self.running = False
-
-    def setStopText(self):
-        self.setText(self.stop_text)
-        if self.stop_tool_tip is not None:
-            self.setToolTip(self.stop_tool_tip)
-
-
-class TranslatorStatusButton(StatusButton):
-    def updateStatus(self, translator: str, source: str, target: str):
-        self.setText(self.tr('Translator: ') + translator + '   '\
-                     + self.tr('Source: ') + source + '   '\
-                     + self.tr('Target: ') + target)
-
-
-class InpainterStatusButton(StatusButton):
-    def updateStatus(self, inpainter: str):
-        self.setText(self.tr('Inpainter: ') + inpainter)
 
 
 class StateChecker(QCheckBox):
@@ -308,6 +265,7 @@ class TitleBar(Widget):
 
     closebtn_clicked = Signal()
     display_lang_changed = Signal(str)
+    enable_module = Signal(int, bool)
 
     def __init__(self, parent, *args, **kwargs) -> None:
         super().__init__(parent, *args, **kwargs)
@@ -475,14 +433,7 @@ class TitleBar(Widget):
         sender = self.sender()
         idx= self.stageActions.index(sender)
         checked = sender.isChecked()
-        if idx == 0:
-            pcfg.module.enable_detect = checked
-        elif idx == 1:
-            pcfg.module.enable_ocr = checked
-        elif idx == 2:
-            pcfg.module.enable_translate = checked
-        elif idx == 3:
-            pcfg.module.enable_inpaint = checked
+        self.enable_module.emit(idx, checked)
 
     def onMaxBtnClicked(self):
         if self.mainwindow.isMaximized():
@@ -551,28 +502,138 @@ class TitleBar(Widget):
         self.titleLabel.setText(title)
 
 
+class SmallConfigPutton(QPushButton):
+    pass
+
+
+CFG_ICON  = QIcon('icons/leftbar_config_activate.svg')
+
+
+class SelectionWithConfigWidget(Widget):
+
+    cfg_clicked = Signal()
+
+    def __init__(self, selector_name: str, add_cfg_btn=True, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        label = ConfigClickableLabel(text=selector_name)
+        label.clicked.connect(self.cfg_clicked)
+        
+        self.selector = SmallComboBox()
+
+        self.cfg_btn = None
+        if add_cfg_btn:
+            self.cfg_btn = SmallConfigPutton()
+            self.cfg_btn.clicked.connect(self.cfg_clicked)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(label)
+        layout2 = QHBoxLayout()
+        layout2.setSpacing(0)
+        layout2.addWidget(self.selector)
+        layout2.addWidget(self.cfg_btn)
+        layout2.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(label)
+        layout.addLayout(layout2)
+
+    def enterEvent(self, event: QEvent) -> None:
+        if self.cfg_btn is not None:
+            self.cfg_btn.setIcon(CFG_ICON)
+        return super().enterEvent(event)
+
+    def leaveEvent(self, event: QEvent) -> None:
+        if self.cfg_btn is not None:
+            self.cfg_btn.setIcon(QIcon())
+        return super().leaveEvent(event)
+    
+    def blockSignals(self, block: bool):
+        self.selector.blockSignals(block)
+        super().blockSignals(block)
+    
+    def setSelectedValue(self, value: str, block_signals=True):
+        if block_signals:
+            self.blockSignals(True)
+        self.selector.setCurrentText(value)
+        if block_signals:
+            self.blockSignals(False)
+    
+
+class TranslatorSelectionWidget(Widget):
+
+    cfg_clicked = Signal()
+
+    def __init__(self) -> None:
+        super().__init__()
+        label = ConfigClickableLabel(text=self.tr('Translate'))
+        label.clicked.connect(self.cfg_clicked)
+        label_src = ConfigClickableLabel(text=self.tr('Source'))
+        label_src.clicked.connect(self.cfg_clicked)
+        label_tgt = ConfigClickableLabel(text=self.tr('Target'))
+        label_tgt.clicked.connect(self.cfg_clicked)
+        
+        self.selector = SmallComboBox()
+        self.src_selector = SmallComboBox()
+        self.tgt_selector = SmallComboBox()
+        self.cfg_btn = SmallConfigPutton()
+        self.cfg_btn.clicked.connect(self.cfg_clicked)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(label)
+        layout.addWidget(self.selector)
+        layout.addWidget(label_src)
+        layout.addWidget(self.src_selector)
+        layout.addWidget(label_tgt)
+        layout.addWidget(self.tgt_selector)
+        layout.addWidget(self.cfg_btn)
+        layout.setSpacing(1)
+
+    def enterEvent(self, event: QEvent) -> None:
+        if self.cfg_btn is not None:
+            self.cfg_btn.setIcon(CFG_ICON)
+        return super().enterEvent(event)
+
+    def leaveEvent(self, event: QEvent) -> None:
+        if self.cfg_btn is not None:
+            self.cfg_btn.setIcon(QIcon())
+        return super().leaveEvent(event)
+    
+    def blockSignals(self, block: bool):
+        self.src_selector.blockSignals(block)
+        self.tgt_selector.blockSignals(block)
+        self.selector.blockSignals(block)
+        super().blockSignals(block)
+    
+    def finishSetTranslator(self, translator: BaseTranslator):
+        self.blockSignals(True)
+        self.src_selector.clear()
+        self.tgt_selector.clear()
+        self.src_selector.addItems(translator.supported_src_list)
+        self.tgt_selector.addItems(translator.supported_tgt_list)
+        self.selector.setCurrentText(translator.name)
+        self.src_selector.setCurrentText(translator.lang_source)
+        self.tgt_selector.setCurrentText(translator.lang_target)
+        self.blockSignals(False)
+
+
+
 class BottomBar(Widget):
     
     textedit_checkchanged = Signal()
     paintmode_checkchanged = Signal()
     textblock_checkchanged = Signal()
-    inpaint_btn_clicked = Signal()
 
     def __init__(self, mainwindow: QMainWindow, *args, **kwargs) -> None:
         super().__init__(mainwindow, *args, **kwargs)
         self.setFixedHeight(BOTTOMBAR_HEIGHT)
         self.setMouseTracking(True)
         self.mainwindow = mainwindow
+        
+        self.textdet_selector = SelectionWithConfigWidget(self.tr('Text Detector'))
+        self.ocr_selector = SelectionWithConfigWidget(self.tr('OCR'))
+        self.inpaint_selector = SelectionWithConfigWidget(self.tr('Inpaint'))
+        self.trans_selector = TranslatorSelectionWidget()
 
-        self.translatorStatusbtn = TranslatorStatusButton()
-        self.translatorStatusbtn.setHidden(True)
-        self.transTranspageBtn = RunStopTextBtn(self.tr('translate page'),
-                                                self.tr('stop'),
-                                                self.tr('translate current page'),
-                                                self.tr('stop translation'))
-        self.inpainterStatBtn = InpainterStatusButton()
-        self.inpainterStatBtn.clicked.connect(self.inpaintBtnClicked)
-        self.transTranspageBtn.hide()
         self.hlayout = QHBoxLayout(self)
         self.paintChecker = QCheckBox()
         self.paintChecker.setObjectName('PaintChecker')
@@ -595,9 +656,13 @@ class BottomBar(Widget):
         self.textlayerSlider.setValue(100)
         self.textlayerSlider.setRange(0, 100)
         
-        self.hlayout.addWidget(self.translatorStatusbtn)
-        self.hlayout.addWidget(self.transTranspageBtn)
-        self.hlayout.addWidget(self.inpainterStatBtn)
+        self.hlayout.addWidget(self.textdet_selector)
+        self.hlayout.addWidget(self.ocr_selector)
+        self.hlayout.addWidget(self.inpaint_selector)
+        self.hlayout.addWidget(self.trans_selector)
+        # self.hlayout.addWidget(self.translatorStatusbtn)
+        # self.hlayout.addWidget(self.transTranspageBtn)
+        # self.hlayout.addWidget(self.inpainterStatBtn)
         self.hlayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.hlayout.addWidget(self.textlayerSlider)
         self.hlayout.addWidget(self.originalSlider)
@@ -623,6 +688,3 @@ class BottomBar(Widget):
 
     def onTextblockCheckerClicked(self):
         self.textblock_checkchanged.emit()
-
-    def inpaintBtnClicked(self):
-        self.inpaint_btn_clicked.emit()

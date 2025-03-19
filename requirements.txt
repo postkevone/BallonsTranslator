@@ -34,7 +34,7 @@ keyboard
 ordered-set
 opencc-python-reimplemented
 requests
-ultralytics
+ultralytics==8.3.90
 beautifulsoup4
 colorama
 openai>=1.59.5

@@ -599,6 +599,16 @@ class ConfigPanel(Widget):
         self.configTable.setCurrentItem(idx0, idx1)
         self.configTable.tableitem_pressed.emit(idx0, idx1)
 
+    def focusOnDetect(self):
+        idx0, idx1 = self.detect_sub_block.idx0, self.detect_sub_block.idx1
+        self.configTable.setCurrentItem(idx0, idx1)
+        self.configTable.tableitem_pressed.emit(idx0, idx1)
+
+    def focusOnOCR(self):
+        idx0, idx1 = self.ocr_sub_block.idx0, self.ocr_sub_block.idx1
+        self.configTable.setCurrentItem(idx0, idx1)
+        self.configTable.tableitem_pressed.emit(idx0, idx1)
+
     def hideEvent(self, e) -> None:
         self.save_config.emit()
         return super().hideEvent(e)

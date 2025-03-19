@@ -284,7 +284,6 @@ class ImgtransThread(QThread):
         self.inpaint_thread = inpaint_thread
         self.job = None
         self.imgtrans_proj: ProjImgTrans = None
-        self.mask_postprocess = None
 
     @property
     def textdetector(self) -> TextDetectorBase:
@@ -365,8 +364,6 @@ class ImgtransThread(QThread):
             if cfg_module.enable_detect:
                 try:
                     mask, blk_list = self.textdetector.detect(img, self.imgtrans_proj)
-                    if self.mask_postprocess is not None:
-                        mask = self.mask_postprocess(mask)
                     need_save_mask = True
                 except Exception as e:
                     create_error_dialog(e, self.tr('Text Detection Failed.'), 'TextDetectFailed')
@@ -589,8 +586,6 @@ def unload_modules(self, module_names):
 class ModuleManager(QObject):
     imgtrans_proj: ProjImgTrans = None
 
-    update_translator_status = Signal(str, str, str)
-    update_inpainter_status = Signal(str)
     finish_translate_page = Signal(str)
     canvas_inpaint_finished = Signal(dict)
     inpaint_th_finished = Signal()
@@ -613,18 +608,14 @@ class ModuleManager(QObject):
 
     def setupThread(self, config_panel: ConfigPanel, imgtrans_progress_msgbox: ImgtransProgressMessageBox, ocr_postprocess: Callable = None, translate_preprocess: Callable = None, translate_postprocess: Callable = None):
         self.textdetect_thread = TextDetectThread()
-        self.textdetect_thread.finish_set_module.connect(self.on_finish_setdetector)
 
         self.ocr_thread = OCRThread()
-        self.ocr_thread.finish_set_module.connect(self.on_finish_setocr)
-
+        
         self.translate_thread = TranslateThread()
         self.translate_thread.progress_changed.connect(self.on_update_translate_progress)
-        self.translate_thread.finish_set_module.connect(self.on_finish_settranslator)
         self.translate_thread.finish_translate_page.connect(self.on_finish_translate_page)  
 
         self.inpaint_thread = InpaintThread()
-        self.inpaint_thread.finish_set_module.connect(self.on_finish_setinpainter)
         self.inpaint_thread.finish_inpaint.connect(self.on_finish_inpaint)
 
         self.progress_msgbox = imgtrans_progress_msgbox
@@ -641,8 +632,6 @@ class ModuleManager(QObject):
         translator_params = merge_config_module_params(cfg_module.translator_params, GET_VALID_TRANSLATORS(), TRANSLATORS.get)
         translator_panel.addModulesParamWidgets(translator_params)
         translator_panel.translator_changed.connect(self.setTranslator)
-        translator_panel.source_combobox.currentTextChanged.connect(self.on_translatorsource_changed)
-        translator_panel.target_combobox.currentTextChanged.connect(self.on_translatortarget_changed)
         translator_panel.paramwidget_edited.connect(self.on_translatorparam_edited)
         from modules.translators.hooks import chs2cht
         BaseTranslator.register_preprocess_hooks({'keyword_sub': translate_preprocess})
@@ -671,10 +660,6 @@ class ModuleManager(QObject):
 
         config_panel.unload_models.connect(self.unload_all_models)
 
-        self.setTextDetector()
-        self.setOCR()
-        self.setTranslator()
-        self.setInpainter()
 
     def unload_all_models(self):
         unload_modules(self, {'textdetector', 'inpainter', 'ocr', 'translator'})
@@ -858,7 +843,6 @@ class ModuleManager(QObject):
         if self.translate_thread.isRunning():
             LOGGER.warning('Terminating a running translation thread.')
             self.translate_thread.terminate()
-        self.update_translator_status.emit('...', cfg_module.translate_source, cfg_module.translate_target)
         self.translate_thread.setTranslator(translator)
 
     def setInpainter(self, inpainter: str = None):
@@ -893,36 +877,6 @@ class ModuleManager(QObject):
             self.ocr_thread.terminate()
         self.ocr_thread.setOCR(ocr)
 
-    def on_finish_setdetector(self):
-        if self.textdetector is not None:
-            cfg_module.textdetector = self.textdetector.name
-            self.textdetect_panel.setDetector(self.textdetector.name)
-            LOGGER.info('Text detector set to {}'.format(self.textdetector.name))
-
-    def on_finish_setocr(self):
-        if self.ocr is not None:
-            cfg_module.ocr = self.ocr.name
-            self.ocr_panel.setOCR(self.ocr.name)
-            LOGGER.info('OCR set to {}'.format(self.ocr.name))
-
-    def on_finish_setinpainter(self):
-        if self.inpainter is not None:
-            cfg_module.inpainter = self.inpainter.name
-            self.inpaint_panel.setInpainter(self.inpainter.name)
-            self.update_inpainter_status.emit(cfg_module.inpainter)
-            LOGGER.info('Inpainter set to {}'.format(self.inpainter.name))
-
-    def on_finish_settranslator(self):
-        translator = self.translator
-        if translator is not None:
-            cfg_module.translator = translator.name
-            self.update_translator_status.emit(cfg_module.translator, cfg_module.translate_source, cfg_module.translate_target)
-            self.translator_panel.finishSetTranslator(translator)
-            LOGGER.info('Translator set to {}'.format(self.translator.name))
-        else:
-            LOGGER.error('invalid translator')
-            self.update_translator_status.emit(self.tr('Invalid'), '', '')
-        
     def on_finish_translate_page(self, page_key: str):
         self.finish_translate_page.emit(page_key)
     
@@ -934,20 +888,6 @@ class ModuleManager(QObject):
     def canvas_inpaint(self, inpaint_dict):
         self.run_canvas_inpaint = True
         self.inpaint(**inpaint_dict)
-
-    def on_translatorsource_changed(self):
-        text = self.translator_panel.source_combobox.currentText()
-        if self.translator is not None:
-            self.translator.set_source(text)
-        cfg_module.translate_source = text
-        self.update_translator_status.emit(cfg_module.translator, cfg_module.translate_source, cfg_module.translate_target)
-
-    def on_translatortarget_changed(self):
-        text = self.translator_panel.target_combobox.currentText()
-        if self.translator is not None:
-            self.translator.set_target(text)
-        cfg_module.translate_target = text
-        self.update_translator_status.emit(cfg_module.translator, cfg_module.translate_source, cfg_module.translate_target)
     
     def on_translatorparam_edited(self, param_key: str, param_content: dict):
         if self.translator is not None:

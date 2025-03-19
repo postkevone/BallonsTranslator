@@ -17,6 +17,7 @@ from utils.textblock import TextBlock, TextAlignment
 from utils import shared
 from utils import create_error_dialog, create_info_dialog
 from modules.translators.trans_chatgpt import GPTTranslator
+from modules import GET_VALID_TEXTDETECTORS, GET_VALID_INPAINTERS, GET_VALID_TRANSLATORS, GET_VALID_OCR
 from .misc import parse_stylesheet, set_html_family, QKEY
 from utils.config import ProgramConfig, pcfg, save_config, text_styles, save_text_styles, load_textstyle_from, FontFormat
 from utils.proj_imgtrans import ProjImgTrans
@@ -252,9 +253,84 @@ class MainWindow(mainwindow_cls):
         self.imgtrans_progress_msgbox = ImgtransProgressMessageBox()
         self.resetStyleSheet()
 
+    def on_finish_setdetector(self):
+        module_manager = self.module_manager
+        if module_manager.textdetector is not None:
+            name = module_manager.textdetector.name
+            pcfg.module.textdetector = name
+            self.configPanel.detect_config_panel.setDetector(name)
+            self.bottomBar.textdet_selector.setSelectedValue(name)
+            LOGGER.info('Text detector set to {}'.format(name))
+
+    def on_finish_setocr(self):
+        module_manager = self.module_manager
+        if module_manager.ocr is not None:
+            name = module_manager.ocr.name
+            pcfg.module.ocr = name
+            self.configPanel.ocr_config_panel.setOCR(name)
+            self.bottomBar.ocr_selector.setSelectedValue(name)
+            LOGGER.info('OCR set to {}'.format(name))
+
+    def on_finish_setinpainter(self):
+        module_manager = self.module_manager
+        if module_manager.inpainter is not None:
+            name = module_manager.inpainter.name
+            pcfg.module.inpainter = name
+            self.configPanel.inpaint_config_panel.setInpainter(name)
+            self.bottomBar.inpaint_selector.setSelectedValue(name)
+            LOGGER.info('Inpainter set to {}'.format(name))
+
+    def on_finish_settranslator(self):
+        module_manager = self.module_manager
+        translator = module_manager.translator
+        if translator is not None:
+            name = translator.name
+            pcfg.module.translator = name
+            self.bottomBar.trans_selector.finishSetTranslator(translator)
+            self.configPanel.trans_config_panel.finishSetTranslator(translator)
+            LOGGER.info('Translator set to {}'.format(name))
+        else:
+            LOGGER.error('invalid translator')
+        
+    def on_enable_module(self, idx, checked):
+        if idx == 0:
+            pcfg.module.enable_detect = checked
+            self.bottomBar.textdet_selector.setVisible(checked)
+        elif idx == 1:
+            pcfg.module.enable_ocr = checked
+            self.bottomBar.ocr_selector.setVisible(checked)
+        elif idx == 2:
+            pcfg.module.enable_translate = checked
+            self.bottomBar.trans_selector.setVisible(checked)
+        elif idx == 3:
+            pcfg.module.enable_inpaint = checked
+            self.bottomBar.inpaint_selector.setVisible(checked)
+
     def setupConfig(self):
 
         self.bottomBar.originalSlider.setValue(int(pcfg.original_transparency * 100))
+        self.bottomBar.trans_selector.selector.addItems(GET_VALID_TRANSLATORS())
+        self.bottomBar.ocr_selector.selector.addItems(GET_VALID_OCR())
+        self.bottomBar.textdet_selector.selector.addItems(GET_VALID_TEXTDETECTORS())
+        self.bottomBar.textdet_selector.selector.currentTextChanged.connect(self.on_textdet_changed)
+        self.bottomBar.inpaint_selector.selector.addItems(GET_VALID_INPAINTERS())
+        self.bottomBar.inpaint_selector.selector.currentTextChanged.connect(self.on_inpaint_changed)
+        self.bottomBar.trans_selector.cfg_clicked.connect(self.to_trans_config)
+        self.bottomBar.trans_selector.selector.currentTextChanged.connect(self.on_trans_changed)
+        self.bottomBar.trans_selector.tgt_selector.currentTextChanged.connect(self.on_trans_tgt_changed)
+        self.bottomBar.trans_selector.src_selector.currentTextChanged.connect(self.on_trans_src_changed)
+        self.bottomBar.textdet_selector.cfg_clicked.connect(self.to_detect_config)
+        self.bottomBar.inpaint_selector.cfg_clicked.connect(self.to_inpaint_config)
+        self.bottomBar.ocr_selector.cfg_clicked.connect(self.to_ocr_config)
+        self.bottomBar.ocr_selector.selector.currentTextChanged.connect(self.on_ocr_changed)
+        self.bottomBar.textdet_selector.setVisible(pcfg.module.enable_detect)
+        self.bottomBar.ocr_selector.setVisible(pcfg.module.enable_ocr)
+        self.bottomBar.trans_selector.setVisible(pcfg.module.enable_translate)
+        self.bottomBar.inpaint_selector.setVisible(pcfg.module.enable_inpaint)
+
+        self.configPanel.trans_config_panel.target_combobox.currentTextChanged.connect(self.on_trans_tgt_changed)
+        self.configPanel.trans_config_panel.source_combobox.currentTextChanged.connect(self.on_trans_src_changed)
+
         self.drawingPanel.maskTransperancySlider.setValue(int(pcfg.mask_transparency * 100))
         self.leftBar.initRecentProjMenu(pcfg.recent_proj_list)
         self.leftBar.showPageListLabel.setChecked(pcfg.show_page_list)
@@ -274,21 +350,23 @@ class MainWindow(mainwindow_cls):
         self.show_source_text(pcfg.show_source_text)
 
         self.module_manager = module_manager = ModuleManager(self.imgtrans_proj)
-        module_manager.update_translator_status.connect(self.updateTranslatorStatus)
-        module_manager.update_inpainter_status.connect(self.updateInpainterStatus)
         module_manager.finish_translate_page.connect(self.finishTranslatePage)
         module_manager.imgtrans_pipeline_finished.connect(self.on_imgtrans_pipeline_finished)
         module_manager.page_trans_finished.connect(self.on_pagtrans_finished)
         module_manager.setupThread(self.configPanel, self.imgtrans_progress_msgbox, self.ocr_postprocess, self.translate_preprocess, self.translate_postprocess)
         module_manager.progress_msgbox.showed.connect(self.on_imgtrans_progressbox_showed)
-        module_manager.imgtrans_thread.mask_postprocess = self.drawingPanel.rectPanel.post_process_mask
         module_manager.blktrans_pipeline_finished.connect(self.on_blktrans_finished)
         module_manager.imgtrans_thread.post_process_mask = self.drawingPanel.rectPanel.post_process_mask
+        module_manager.inpaint_thread.finish_set_module.connect(self.on_finish_setinpainter)
+        module_manager.translate_thread.finish_set_module.connect(self.on_finish_settranslator)
+        module_manager.textdetect_thread.finish_set_module.connect(self.on_finish_setdetector)
+        module_manager.ocr_thread.finish_set_module.connect(self.on_finish_setocr)
+        module_manager.setTextDetector()
+        module_manager.setOCR()
+        module_manager.setTranslator()
+        module_manager.setInpainter()
 
         self.leftBar.run_imgtrans_clicked.connect(self.run_imgtrans)
-        self.bottomBar.inpaint_btn_clicked.connect(self.inpaintBtnClicked)
-        self.bottomBar.translatorStatusbtn.clicked.connect(self.translatorStatusBtnPressed)
-        self.bottomBar.transTranspageBtn.run_target.connect(self.on_transpagebtn_pressed)
 
         self.titleBar.darkModeAction.setChecked(pcfg.darkmode)
 
@@ -523,7 +601,8 @@ class MainWindow(mainwindow_cls):
         self.titleBar.replaceOCRkeyword_trigger.connect(self.show_OCR_keyword_window)
         self.titleBar.run_trigger.connect(self.leftBar.runImgtransBtn.click)
         self.titleBar.run_woupdate_textstyle_trigger.connect(self.run_imgtrans_wo_textstyle_update)
-        self.titleBar.translate_page_trigger.connect(self.bottomBar.transTranspageBtn.click)
+        self.titleBar.translate_page_trigger.connect(self.on_transpagebtn_pressed)
+        self.titleBar.enable_module.connect(self.on_enable_module)
         self.titleBar.importtstyle_trigger.connect(self.import_tstyles)
         self.titleBar.exporttstyle_trigger.connect(self.export_tstyles)
         self.titleBar.darkmode_trigger.connect(self.on_darkmode_triggered)
@@ -867,41 +946,90 @@ class MainWindow(mainwindow_cls):
             if editing_textitem is not None:
                 editing_textitem.startEdit()
         
-    def translatorStatusBtnPressed(self):
+    def to_trans_config(self):
         self.leftBar.configChecker.setChecked(True)
         self.configPanel.focusOnTranslator()
 
-    def inpaintBtnClicked(self):
+    def to_inpaint_config(self):
         self.leftBar.configChecker.setChecked(True)
         self.configPanel.focusOnInpaint()
 
-    def updateTranslatorStatus(self, translator: str, source: str, target: str):
-        if translator == '':
-            self.bottomBar.translatorStatusbtn.hide()
-            self.bottomBar.translatorStatusbtn.hide()
-        else:
-            self.bottomBar.translatorStatusbtn.updateStatus(translator, source, target)
-            self.bottomBar.translatorStatusbtn.show()
-            self.bottomBar.transTranspageBtn.show()
+    def to_ocr_config(self):
+        self.leftBar.configChecker.setChecked(True)
+        self.configPanel.focusOnOCR()
 
-    def updateInpainterStatus(self, inpainter: str):
-        self.bottomBar.inpainterStatBtn.updateStatus(inpainter)
+    def to_detect_config(self):
+        self.leftBar.configChecker.setChecked(True)
+        self.configPanel.focusOnDetect()
+
+    def on_textdet_changed(self):
+        module = self.bottomBar.textdet_selector.selector.currentText()
+        tgt_selector = self.configPanel.detect_config_panel.module_combobox
+        if tgt_selector.currentText() != module and module in GET_VALID_TEXTDETECTORS():
+            tgt_selector.setCurrentText(module)
+
+    def on_ocr_changed(self):
+        module = self.bottomBar.ocr_selector.selector.currentText()
+        tgt_selector = self.configPanel.ocr_config_panel.module_combobox
+        if tgt_selector.currentText() != module and module in GET_VALID_OCR():
+            tgt_selector.setCurrentText(module)
+
+    def on_trans_changed(self):
+        module = self.bottomBar.trans_selector.selector.currentText()
+        tgt_selector = self.configPanel.trans_config_panel.module_combobox
+        if tgt_selector.currentText() != module and module in GET_VALID_TRANSLATORS():
+            tgt_selector.setCurrentText(module)
+
+    def on_trans_src_changed(self):
+        sender = self.sender()
+        text = sender.currentText()
+        translator = self.module_manager.translator
+        if translator is not None:
+            translator.set_source(text)
+        pcfg.module.translate_source = text
+        combobox = self.configPanel.trans_config_panel.source_combobox
+        if sender != combobox:
+            combobox.blockSignals(True)
+            combobox.setCurrentText(text)
+            combobox.blockSignals(False)
+        combobox = self.bottomBar.trans_selector.src_selector
+        if sender != combobox:
+            combobox.blockSignals(True)
+            combobox.setCurrentText(text)
+            combobox.blockSignals(False)
+
+    def on_trans_tgt_changed(self):
+        sender = self.sender()
+        text = sender.currentText()
+        translator = self.module_manager.translator
+        if translator is not None:
+            translator.set_target(text)
+        pcfg.module.translate_target = text
+        combobox = self.configPanel.trans_config_panel.target_combobox
+        if sender != combobox:
+            combobox.blockSignals(True)
+            combobox.setCurrentText(text)
+            combobox.blockSignals(False)
+        combobox = self.bottomBar.trans_selector.tgt_selector
+        if sender != combobox:
+            combobox.blockSignals(True)
+            combobox.setCurrentText(text)
+            combobox.blockSignals(False)
+
+    def on_inpaint_changed(self):
+        module = self.bottomBar.inpaint_selector.selector.currentText()
+        tgt_selector = self.configPanel.inpaint_config_panel.module_combobox
+        if tgt_selector.currentText() != module and module in GET_VALID_INPAINTERS():
+            tgt_selector.setCurrentText(module)
 
     def on_transpagebtn_pressed(self, run_target: bool):
         page_key = self.imgtrans_proj.current_img
         if page_key is None:
-            self.bottomBar.transTranspageBtn.setRunText()
             return
-        # if run_target and self.canvas.text_change_unsaved():
-        #     self.st_manager.updateTextBlkList()
-        
-        # self.module_manager.translatePage(run_target, page_key)
 
         blkitem_list = self.st_manager.textblk_item_list
 
         if len(blkitem_list) < 1:
-            if self.bottomBar.transTranspageBtn.running:
-                self.bottomBar.transTranspageBtn.setRunText()
             return
         
         self.translateBlkitemList(blkitem_list, -1)
@@ -935,7 +1063,6 @@ class MainWindow(mainwindow_cls):
 
 
     def finishTranslatePage(self, page_key):
-        self.bottomBar.transTranspageBtn.setRunText()
         if page_key == self.imgtrans_proj.current_img:
             self.st_manager.updateTranslation()
 
@@ -1074,9 +1201,6 @@ class MainWindow(mainwindow_cls):
         self.translateBlkitemList(blkitem_list, mode)
 
     def on_blktrans_finished(self, mode: int, blk_ids: List[int]):
-
-        if self.bottomBar.transTranspageBtn.running:
-            self.bottomBar.transTranspageBtn.setRunText()
 
         if len(blk_ids) < 1:
             return

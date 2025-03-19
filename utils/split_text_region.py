@@ -280,9 +280,15 @@ def textspan2list(span_list):
 
 
 
-def manga_split(img, bbox, show_process=False):
+def manga_split(img, bbox=None, show_process=False) -> list[TextSpan]:
+
+    im = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+    imh, imw = im.shape[:2]
+
+    if bbox is None:
+        bbox = [0, 0, im.shape[1], im.shape[0]]
     bboxes = [bbox]
-    im = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
     span_list, _ = split_textblock(im, show_process=show_process, shrink=False, recheck=True, discard=False)
     if span_list is None:
         return bboxes
@@ -294,31 +300,41 @@ def manga_split(img, bbox, show_process=False):
     sum_height = sum(s.height for s in span_list)
     mean_height = sum_height / span_num
     max_space = mean_height * 1.5
-    max_height_differ = max_space
-    for ii in range(span_num-1):
-        s = span_list[ii]
-        next_s = span_list[ii+1]
-        if next_s.top - s.bottom > max_space:
-        # if next_s.top - s.bottom > max_space or \
-        #     abs(next_s.left - s.left) > max_height_differ:
-            bboxes.append(bbox.copy())
-            split_pos = ii+1
-            sub0, sub1 = span_list[:split_pos], span_list[split_pos:]
-            if sub0 is None:
-                continue
-            _, maxspan = find_span(sub0, max, key="width")
-            bboxes[0][3] = maxspan.width
+    # for ii in range(span_num-1):
+    #     s = span_list[ii]
+    #     next_s = span_list[ii+1]
+    #     if next_s.top - s.bottom > max_space:
+    #     # if next_s.top - s.bottom > max_space or \
+    #     #     abs(next_s.left - s.left) > max_height_differ:
+    #         bboxes.append(bbox.copy())
+    #         split_pos = ii+1
+    #         sub0, sub1 = span_list[:split_pos], span_list[split_pos:]
+    #         if sub0 is None:
+    #             continue
+    #         _, maxspan = find_span(sub0, max, key="width")
+    #         bboxes[0][3] = maxspan.width
             
-            bboxes[0][0] = bboxes[0][2] - s.bottom + bboxes[0][0]
-            bboxes[0][2] = s.bottom
-            bboxes[0][1] = s.left + bboxes[0][1]
-            bboxes[1][2] = bboxes[1][2] - next_s.top
+    #         bboxes[0][0] = bboxes[0][2] - s.bottom + bboxes[0][0]
+    #         bboxes[0][2] = s.bottom
+    #         bboxes[0][1] = s.left + bboxes[0][1]
+    #         bboxes[1][2] = bboxes[1][2] - next_s.top
             
-            bboxes[1][1] = next_s.left + bboxes[1][1]
-            bboxes[1][3] = bboxes[1][3] - next_s.left
-            break
+    #         bboxes[1][1] = next_s.left + bboxes[1][1]
+    #         bboxes[1][3] = bboxes[1][3] - next_s.left
+    #         break
+        
+    for span in span_list:
+        left = span.left
+        right = span.right
+        span.left = span.top
+        span.right = span.bottom
+        span.top =  imw - right
+        span.bottom = imw - left
+        w, h = span.width, span.height
+        span.height = w
+        span.width = h
 
-    return bboxes
+    return span_list
 
 
 def tessocr_img2text_linemode(img, span_list=None, combine_lines=True, show_process=False, gen_data=False, lang="comic6k", jpn_vert=False):

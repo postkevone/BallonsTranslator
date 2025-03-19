@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 from typing import Tuple, List
 
 from .base import register_textdetectors, TextDetectorBase, TextBlock, DEFAULT_DEVICE, DEVICE_SELECTOR, ProjImgTrans
@@ -31,6 +32,7 @@ class ComicTextDetector(TextDetectorBase):
         'font size multiplier': 1.,
         'font size max': -1,
         'font size min': -1,
+        'mask dilate size': 2
     }
     _load_model_keys = {'model'}
     download_file_list = [{
@@ -74,6 +76,11 @@ class ComicTextDetector(TextDetectorBase):
                 sz = max(fnt_min, sz)
             blk.font_size = sz
             blk._detected_font_size = sz
+
+        ksize = self.get_param_value('mask dilate size')
+        if ksize > 0:
+            element = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * ksize + 1, 2 * ksize + 1),(ksize, ksize))
+            mask = cv2.dilate(mask, element)
 
         return mask, blk_list
 

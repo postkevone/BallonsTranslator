@@ -92,7 +92,8 @@ class BaseModule:
                 try:
                     param_value = type(p)(param_value)
                 except ValueError:
-                    self.logger.warning(f'Invalid param value {param_value} for defined dtype: {type(p)}')
+                    self.logger.warning(f'Invalid param value {param_value} for defined dtype: {type(p)}, revert to original value {p}')
+                    param_value = p
             self.params[param_key] = param_value
 
     def updateParam(self, param_key: str, param_content):
