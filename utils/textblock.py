@@ -898,7 +898,7 @@ def mit_merge_textlines(textlines: List[Quadrilateral], width: int, height: int,
         is_vertical = nv >= len(txtlns) // 2
         region = TextBlock(
             lines=lines, text=texts, angle=angle, fontformat=ffmt, 
-            _detected_font_size=font_size, src_is_vertical=is_vertical)
+            _detected_font_size=font_size, src_is_vertical=is_vertical, vertical=is_vertical)
         region.adjust_bbox()
         if region.src_is_vertical:
             region.alignment = 1

@@ -166,7 +166,7 @@ class YSGYoloDetector(TextDetectorBase):
                             y2 += y1
                             cv2.rectangle(mask, (x1, y1), (x2, y2), 255, -1)
                         lines = xywh2xyxypoly(lines).reshape(-1, 4, 2).tolist()
-                        blk = TextBlock(xyxy=xyxy, lines=np.array(lines), src_is_vertical=is_vertical)
+                        blk = TextBlock(xyxy=xyxy, lines=np.array(lines), src_is_vertical=is_vertical, vertical=is_vertical)
                         blk.font_size = font_sz
                         blk._detected_font_size = font_sz
                         if is_vertical:
