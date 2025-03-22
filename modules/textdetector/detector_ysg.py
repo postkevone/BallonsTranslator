@@ -7,7 +7,7 @@ import numpy as np
 import cv2
 
 from .base import register_textdetectors, TextDetectorBase, TextBlock, DEVICE_SELECTOR
-from utils.textblock import mit_merge_textlines
+from utils.textblock import mit_merge_textlines, sort_regions
 from utils.textblock_mask import canny_flood
 from utils.split_text_region import manga_split, split_textblock
 from utils.imgproc_utils import xywh2xyxypoly
@@ -200,6 +200,7 @@ class YSGYoloDetector(TextDetectorBase):
                 pts_list += xyxy_list.tolist()
 
         blk_list += mit_merge_textlines(pts_list, width=im_w, height=im_h)
+        blk_list = sort_regions(blk_list)
 
         fnt_rsz = self.get_param_value('font size multiplier')
         fnt_max = self.get_param_value('font size max')

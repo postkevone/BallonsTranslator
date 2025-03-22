@@ -1,5 +1,5 @@
 > [!IMPORTANT]  
-> **번역 결과를 공개적으로 공유하고 경험이 풍부한 인간 번역가가가 번역 또는 교정에 참여하지 않은 경우, 기계 번역으로 명확하게 표시하십시오.**
+> **번역 결과물을 공개적으로 공유할 때 숙련된 번역가가 번역이나 교정에 참여하지 않았다면, 기계 번역임을 잘 보이는 곳에 표시해 주세요.**
 
 # BallonTranslator
 [简体中文](/README.md) | [English](/README_EN.md) | [pt-BR](../doc/README_PT-BR.md) | [Русский](../doc/README_RU.md) | [日本語](../doc/README_JA.md) | [Indonesia](../doc/README_ID.md) | [Tiếng Việt](../doc/README_VI.md) | 한국어
