@@ -43,7 +43,7 @@ class TextSpan(object):
         else:
             raise AttributeError(f'Invalid key: {index}')
 
-def split_step0(span, thresh, sumby_yaxis, thresh2=None):
+def split_step0(span, thresh, sumby_yaxis, thresh2=None) -> list[TextSpan]:
     candidate_pnts = (np.where(sumby_yaxis[span.top: span.bottom] > thresh)[0] + span.top).tolist()
     span_list = []
     if len(candidate_pnts) == 0:
@@ -188,36 +188,37 @@ def box(width, height):
     return np.ones((height, width), dtype=np.uint8)
 
 
-def crop_img(img, crop_ratio=0.2):
-    w = img.shape[1]
+def crop_img(img, crop_ratio=0.2, clip_width=True, dilate=False):
+    h, w = img.shape[:2]
     moments = cv2.moments(img)
     area = moments['m00']
     if area != 0:
         mean_x = int(round(moments['m10'] / area))
         mean_y = int(round(moments['m01'] / area))
         crop_r = int(round(crop_ratio * w))
-
-        crop_x0 = mean_x - crop_r
-        crop_x1 = mean_x + crop_r
-        if crop_x0 < 0:
-            crop_x0 = 0
-        if crop_x1 > w:
-            crop_x1 = w
-        img = img[:, crop_x0: crop_x1]
+        if clip_width:
+            crop_x0 = np.clip(mean_x - crop_r, 0, w)
+            crop_x1 = np.clip(mean_x + crop_r, 0, w)
+            if crop_x1 > crop_x0:
+                img = img[:, crop_x0: crop_x1]
+        else:
+            crop_r = np.clip(crop_r * 2, 0, w - 1)
+            img = img[:, crop_r:]
     img = np.copy(img)
-    w = int(round(w/7))
-    if w > 1:
-        img = cv2.dilate(img, box(w, 1), 1)
+    if clip_width and dilate:
+        w = int(round(w/7))
+        if w > 1:
+            img = cv2.dilate(img, box(w, 1), 1)
     return img, img.shape[0], img.shape[1]
 
 
 
-def split_textblock(src_img, crop_ratio=0.2, blur=False, show_process=False, discard=True, shrink=True, recheck=False):
+def split_textblock(src_img, crop_ratio=0.2, blur=False, show_process=False, discard=True, shrink=True, recheck=False, clip_width=True, dilate=True):
     
     if blur:
         src_img = cv2.GaussianBlur(src_img,(3,3),cv2.BORDER_DEFAULT)
     if crop_ratio > 0:
-        img, height, width = crop_img(src_img, crop_ratio=crop_ratio)
+        img, height, width = crop_img(src_img, crop_ratio=crop_ratio, clip_width=clip_width, dilate=dilate)
     else:
         img, height, width = src_img, src_img.shape[0], src_img.shape[1]
     
@@ -250,7 +251,19 @@ def split_textblock(src_img, crop_ratio=0.2, blur=False, show_process=False, dis
     if recheck and len(span_list) == 1 and crop_ratio > 0:
         return split_textblock(src_img, crop_ratio==-1, show_process=show_process, discard=discard, shrink=shrink, recheck=False)
     
-    return span_list, vars
+    valid_span_list = []
+    for span in span_list:
+        if span.top is None:
+            span.set_top(0)
+        if span.left is None:
+            span.set_left(0)
+        if span.right is None:
+            span.set_right(width)
+        if span.bottom is None:
+            span.set_bottom(height)
+        valid_span_list.append(span)
+
+    return valid_span_list, vars
 
 
 
@@ -280,7 +293,7 @@ def textspan2list(span_list):
 
 
 
-def manga_split(img, bbox=None, show_process=False) -> list[TextSpan]:
+def manga_split(img, bbox=None, show_process=False, clip_width=False) -> list[TextSpan]:
 
     im = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
     imh, imw = im.shape[:2]
@@ -289,39 +302,10 @@ def manga_split(img, bbox=None, show_process=False) -> list[TextSpan]:
         bbox = [0, 0, im.shape[1], im.shape[0]]
     bboxes = [bbox]
 
-    span_list, _ = split_textblock(im, show_process=show_process, shrink=False, recheck=True, discard=False)
+    span_list, _ = split_textblock(im, show_process=show_process, shrink=False, recheck=True, discard=False, crop_ratio=0)
     if span_list is None:
         return bboxes
     span_list, _ = shrink_span_list(im, span_list, shrink_vert_space=False)
-    
-    split_pos = -1
-    
-    span_num = len(span_list)
-    sum_height = sum(s.height for s in span_list)
-    mean_height = sum_height / span_num
-    max_space = mean_height * 1.5
-    # for ii in range(span_num-1):
-    #     s = span_list[ii]
-    #     next_s = span_list[ii+1]
-    #     if next_s.top - s.bottom > max_space:
-    #     # if next_s.top - s.bottom > max_space or \
-    #     #     abs(next_s.left - s.left) > max_height_differ:
-    #         bboxes.append(bbox.copy())
-    #         split_pos = ii+1
-    #         sub0, sub1 = span_list[:split_pos], span_list[split_pos:]
-    #         if sub0 is None:
-    #             continue
-    #         _, maxspan = find_span(sub0, max, key="width")
-    #         bboxes[0][3] = maxspan.width
-            
-    #         bboxes[0][0] = bboxes[0][2] - s.bottom + bboxes[0][0]
-    #         bboxes[0][2] = s.bottom
-    #         bboxes[0][1] = s.left + bboxes[0][1]
-    #         bboxes[1][2] = bboxes[1][2] - next_s.top
-            
-    #         bboxes[1][1] = next_s.left + bboxes[1][1]
-    #         bboxes[1][3] = bboxes[1][3] - next_s.left
-    #         break
         
     for span in span_list:
         left = span.left
