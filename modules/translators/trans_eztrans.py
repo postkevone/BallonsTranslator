@@ -16,14 +16,19 @@ class MyClient(Client64):
         return self.request32('translate', src_text)
 
 
+def fullwidth_to_halfwidth(text):
+    mapping = {i: i - 0xFEE0 for i in range(0xFF01, 0xFF5F)}
+    mapping[0x3000] = 0x0020  # 전각 공백 → 반각 공백
+    return text.translate(mapping)
+
 @register_translator('ezTrans')
 class ezTransTranslator(BaseTranslator):
     concate_text = True
 
     params: Dict = {
         'path_dat': r"C:\Program Files (x86)\ChangShinSoft\ezTrans XP\Dat",
-        'path_j2k': r"C:\Program Files (x86)\ChangShinSoft\ezTrans XP\J2KEngine.dll",
-        'path_k2j(Optional)': r"C:\Program Files (x86)\ChangShinSoft\ezTrans XP\ehnd-kor.dll"
+        'path_j2k(J2KEngine.dll)': r"C:\Program Files (x86)\ChangShinSoft\ezTrans XP\J2KEngine.dll",
+        'path_k2j(ehnd-kor.dll, Optional)': r"C:\Program Files (x86)\ChangShinSoft\ezTrans XP\ehnd-kor.dll"
     }
 
     def _setup_translator(self):
@@ -31,9 +36,12 @@ class ezTransTranslator(BaseTranslator):
         self.lang_map['日本語'] = 'j'
         self.lang_map['한국어'] = 'k'
 
-        self.j2k_engine = MyClient(self.params['path_j2k'], "J2K", self.params['path_dat'])
-        if os.path.exists(self.params['path_k2j(Optional)']):
-            self.k2j_engine = MyClient(self.params['path_k2j(Optional)'], "K2J", self.params['path_dat'])
+        self.j2k_engine, self.k2j_engine = (None, None)
+
+        if os.path.exists(self.params['path_j2k(J2KEngine.dll)']):
+            self.j2k_engine = MyClient(self.params['path_j2k(J2KEngine.dll)'], "J2K", self.params['path_dat'])
+        if os.path.exists(self.params['path_k2j(ehnd-kor.dll, Optional)']):
+            self.k2j_engine = MyClient(self.params['path_k2j(ehnd-kor.dll, Optional)'], "K2J", self.params['path_dat'])
 
     def _translate(self, src_list: List[str]) -> List[str]:
         source = self.lang_map[self.lang_source]
@@ -41,17 +49,22 @@ class ezTransTranslator(BaseTranslator):
 
         if source != target:
             engine: MyClient = getattr(self, f"{source}2{target}_engine")
-            return engine.translate(src_list)
+            return engine.translate(src_list) if source != "k" else fullwidth_to_halfwidth(engine.translate(src_list))
         else:
             return src_list
 
     def updateParam(self, param_key: str, param_content):
         super().updateParam(param_key, param_content)
 
+        if not self.j2k_engine and os.path.exists(self.params['path_j2k(J2KEngine.dll)']):
+            self.j2k_engine = MyClient(self.params['path_j2k(J2KEngine.dll)'], "J2K", self.params['path_dat'])
+        if not self.k2j_engine and os.path.exists(self.params['path_k2j(ehnd-kor.dll, Optional)']):
+            self.k2j_engine = MyClient(self.params['path_k2j(ehnd-kor.dll, Optional)'], "K2J", self.params['path_dat'])
+
     @property
     def supported_tgt_list(self) -> List[str]:
-        return ['한국어', '日本語'] if hasattr(self,"k2j_engine") else ['한국어']
+        return ['한국어', '日本語'] if self.j2k_engine else ['한국어']
 
     @property
     def supported_src_list(self) -> List[str]:
-        return ['한국어', '日本語'] if hasattr(self,"k2j_engine") else ['日本語']
+        return ['한국어', '日本語'] if self.k2j_engine else ['日本語']
