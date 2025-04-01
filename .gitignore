@@ -43,6 +43,9 @@ localtmp*
 venv
 pip
 .DS_Store
+*.dic
+*.aff
+*.exc
 
 fonts/*
 !fonts/put fonts here.txt
@@ -57,5 +60,6 @@ launch_win_venv.bat
 install_venv.bat
 install-BT.cmd
 download_models.bat
+Ultralytics/settings.json
 
 last-session.log
