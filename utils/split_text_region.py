@@ -225,9 +225,9 @@ def split_textblock(src_img, crop_ratio=0.2, blur=False, show_process=False, dis
     sumby_yaxis = img.mean(axis=1)
     bound0 = np.where(sumby_yaxis > sumby_yaxis.mean() * 0.1)[0].tolist()
     vars = (-1, -1)
-
-    # if len(bound0) <= 1:
-    #     return [TextSpan(0, height-1)], vars
+    
+    if len(bound0) < 2:
+        return [TextSpan(0, height-1)], vars
 
     base_span = TextSpan(bound0[0], bound0[-1])
     meanby_yaxis = sumby_yaxis.mean()

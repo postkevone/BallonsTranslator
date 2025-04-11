@@ -101,12 +101,12 @@ class LeftBar(Widget):
         actionImportFromDoc = QAction(self.tr("Import from Doc"), self)
         self.import_doc = actionImportFromDoc.triggered
 
-        actionExportSrcTxt = QAction(self.tr("Export soure text as TXT"), self)
+        actionExportSrcTxt = QAction(self.tr("Export source text as TXT"), self)
         self.export_src_txt = actionExportSrcTxt.triggered
         actionExportTranslationTxt = QAction(self.tr("Export translation as TXT"), self)
         self.export_trans_txt = actionExportTranslationTxt.triggered
 
-        actionExportSrcMD = QAction(self.tr("Export soure text as markdown"), self)
+        actionExportSrcMD = QAction(self.tr("Export source text as markdown"), self)
         self.export_src_md = actionExportSrcMD.triggered
         actionExportTranslationMD = QAction(self.tr("Export translation as markdown"), self)
         self.export_trans_md = actionExportTranslationMD.triggered
