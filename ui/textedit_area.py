@@ -716,8 +716,11 @@ class TextEditListScrollArea(QScrollArea):
                     sel_min, sel_max = min(old_idx_list[0], tgt_w.idx), max(old_idx_list[-1], tgt_w.idx)
                 elif self.sel_anchor_widget is not None: #AttributeError: 'NoneType' object has no attribute 'idx'
                     sel_min, sel_max = min(self.sel_anchor_widget.idx, tgt_w.idx), max(self.sel_anchor_widget.idx, tgt_w.idx)
-                if sel_min and sel_max: #cannot access local variable 'sel_min' where it is not associated with a value
-                    new_check_list = list(range(sel_min, sel_max + 1))
+                try:
+                    if sel_min and sel_max: #cannot access local variable 'sel_min' where it is not associated with a value
+                        new_check_list = list(range(sel_min, sel_max + 1))
+                except NameError:
+                    pass
         elif ctrl_pressed:
             new_check_set = set(old_idx_list)
             if idx in new_check_set:
