@@ -625,9 +625,10 @@ class TextBlkItem(QGraphicsTextItem):
         format = cursor.charFormat()
         font = self.document().defaultFont()
         
-        font.setHintingPreference(QFont.HintingPreference.PreferNoHinting)
         font.setFamily(ffmat.font_family)
         font.setPointSizeF(ffmat.size_pt)
+        font.setHintingPreference(QFont.HintingPreference.PreferNoHinting)
+        font.setStyleStrategy(QFont.StyleStrategy.PreferAntialias | QFont.StyleStrategy.NoSubpixelAntialias)
 
         fweight = ffmat.font_weight
         if fweight is  None:

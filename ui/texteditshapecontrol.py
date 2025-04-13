@@ -102,7 +102,7 @@ class ControlBlockItem(QGraphicsRectItem):
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         self.ctrl.ctrlblockPressed()
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton and self.ctrl.blk_item is not None:
             blk_item = self.ctrl.blk_item
             if blk_item is not None: #AttributeError: 'NoneType' object has no attribute 'setSelected'
                 blk_item.setSelected(True)

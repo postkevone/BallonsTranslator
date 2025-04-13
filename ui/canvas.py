@@ -563,11 +563,16 @@ class Canvas(QGraphicsScene):
         self.creating_textblock = False
         self.gv.setCursor(Qt.CursorShape.ArrowCursor)
         self.txtblkShapeControl.hide()
+        textblk_created = False
+        rect = self.txtblkShapeControl.rect()
         if self.creating_normal_rect:
-            self.end_create_rect.emit(self.txtblkShapeControl.rect(), btn)
+            self.end_create_rect.emit(rect, btn)
             self.txtblkShapeControl.showControls()
         else:
-            self.end_create_textblock.emit(self.txtblkShapeControl.rect())
+            if rect.width() > 1 and rect.height() > 1:
+                self.end_create_textblock.emit(rect)
+                textblk_created = True
+        return textblk_created
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         if self.mid_btn_pressed:
@@ -683,15 +688,16 @@ class Canvas(QGraphicsScene):
         Qt.MouseButton.LeftButton
         if btn == Qt.MouseButton.MiddleButton:
             self.mid_btn_pressed = False
+        textblk_created = False
         if self.creating_textblock:
             tgt = 0 if btn == Qt.MouseButton.LeftButton else 1
-            self.endCreateTextblock(btn=tgt)
+            textblk_created = self.endCreateTextblock(btn=tgt)
         if btn == Qt.MouseButton.RightButton:
             if self.stroke_img_item is not None:
                 self.finish_erasing.emit(self.stroke_img_item)
-            if self.textEditMode():
+            if self.textEditMode() and not textblk_created:
                 self.context_menu_requested.emit(event.screenPos(), False)
-        elif btn == Qt.MouseButton.LeftButton:
+        if btn == Qt.MouseButton.LeftButton:
             if self.stroke_img_item is not None:
                 self.finish_painting.emit(self.stroke_img_item)
             elif self.scale_tool_mode:

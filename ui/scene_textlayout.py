@@ -26,11 +26,14 @@ PUNSET_HALF = {chr(i) for i in range(0x21, 0x7F)}
 PUNSET_PAUSEORSTOP = {'。', '．', '，', '、', '·', '：', '；', '！', '？'}     # dont need to rotate, 
 PUNSET_ALIGNCENTER = {'。', '．', '，', '、', '·'}
 PUNSET_BRACKETL = {'「', '『', '“', '‘', '（', '《', '〈', '【', '〖', '〔', '［', '｛', '('}
-PUNSET_BRACKETR = {'」', '』', '”', '’', '）', '》', '〉', '】', '〗', '〕', '］', '｝'}
+PUNSET_BRACKETR = {'」', '』', '”', '’', '）', '》', '〉', '】', '〗', '〕', '］', '｝', ')'}
 PUNSET_BRACKET = PUNSET_BRACKETL.union(PUNSET_BRACKETR)
 
 PUNSET_NONBRACKET = {'⸺', '…', '⋯', '～', '-', '–', '—', '＿', '﹏', '●', '•', '~'}
 PUNSET_VERNEEDROTATE = PUNSET_NONBRACKET.union(PUNSET_BRACKET).union(PUNSET_HALF)
+
+PUNSET_ROTATE_ALIGNL = {'」', '』', '”', '’'}
+PUNSET_ROTATE_ALIGNR = {'「', '『', '“', '‘'}
 
 Dingbats_vertical_aligncenter = r'\u2700-\u275A\u2761-\u2767\u2776-\u27BF'
 Miscellaneous_Symbols_Pattern = r'\u2600-\u26FF'  # align center in vertical mode
@@ -439,8 +442,11 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                     line_width = char_records[char_idx]['line_width']
                 if line_width < 0:
                     line_width = cfmt.tbr.width()
-                # natral_shifted = max(line.naturalTextWidth() - cfmt.br.width(), 0)
-                natral_shifted = 0
+
+                space_shift = 0
+                if num_lspaces > 0:
+                    space_shift = num_lspaces * cfmt.space_width
+
                 if char in PUNSET_VERNEEDROTATE:
                     char = blk_text[char_idx]
                     if char.isalpha():
@@ -448,15 +454,21 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                         yoff = -line.ascent() - (line_width - cfmt.font_metrics.capHeight()) / 2
 
                     else:   # () （）
-                        non_bracket_br = cfmt.punc_actual_rect(line, char, cache=True)
-                        xoff = -non_bracket_br[0]
+                        non_bracket_br = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)
                         yoff = -non_bracket_br[1] - non_bracket_br[3]
-                        yoff = yoff - (line_width - non_bracket_br[3]) / 2
+                        if char in PUNSET_BRACKETL:
+                            xoff = 0
+                        else:
+                            xoff = -non_bracket_br[0]
+
+                        if char in PUNSET_ROTATE_ALIGNL:
+                            yoff = yoff
+                        elif char in PUNSET_ROTATE_ALIGNR:
+                            yoff = yoff - (line_width - non_bracket_br[3])
+                        else:
+                            yoff = yoff - (line_width - non_bracket_br[3]) / 2
 
                 else:
-                    space_shift = 0
-                    if num_lspaces > 0:
-                        space_shift = num_lspaces * cfmt.space_width
                     # other characters will simply be aligned center for this line
                     act_rect = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)
                     if vertical_force_aligncentel(char):
@@ -735,11 +747,13 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                     if char.isalpha():
                         cw2 = cfmt.punc_rect(char+char)[1].width()
                         tbr_h = br.width() - (br.width() * 2 - cw2)
-                    if char in {'…', '⋯', '—', '～'}:
+                    elif char in {'…', '⋯', '—', '～'}:
                         tbr_h = line.naturalTextWidth() - num_lspaces * space_w
                         next_char_idx = char_idx + 1
                         if next_char_idx < blk_text_len and blk_text[next_char_idx] == char:
                             tbr_h -= let_sp_offset
+                    else:
+                        tbr_h = line.naturalTextWidth() - num_lspaces * space_w
                     tbr_h += let_sp_offset
                 elif vertical_force_aligncentel(char):
                     if char not in PUNSET_ALIGNCENTER:
@@ -837,8 +851,9 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                 if out_of_vspace:
                     is_first_line = False
 
-            if text_len > 1 and single_char_h is not None:
-                for ii in range(text_len - 1):
+            strip_space_textlen = text_len - num_lspaces
+            if strip_space_textlen > 1 and single_char_h is not None:
+                for ii in range(strip_space_textlen - 1):
                     blk_char_yoffset.append([line_y_offset + ii * single_char_h, line_y_offset + (ii + 1) * single_char_h])
                 blk_char_yoffset.append([blk_char_yoffset[-1][1], line_bottom])
             else:

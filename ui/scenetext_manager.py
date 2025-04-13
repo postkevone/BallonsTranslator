@@ -931,17 +931,16 @@ class SceneTextManager(QObject):
         blkitem.repaint_background()
 
     def onEndCreateTextBlock(self, rect: QRectF):
-        if rect.width() > 1 and rect.height() > 1:
-            xyxy = np.array([rect.x(), rect.y(), rect.right(), rect.bottom()])        
-            xyxy = np.round(xyxy).astype(np.int32)
-            block = TextBlock(xyxy)
-            xywh = np.copy(xyxy)
-            xywh[[2, 3]] -= xywh[[0, 1]]
-            block.set_lines_by_xywh(xywh)
-            block.src_is_vertical = self.formatpanel.global_format.vertical
-            blk_item = TextBlkItem(block, len(self.textblk_item_list), set_format=False, show_rect=True)
-            blk_item.set_fontformat(self.formatpanel.global_format)
-            self.canvas.push_undo_command(CreateItemCommand(blk_item, self))
+        xyxy = np.array([rect.x(), rect.y(), rect.right(), rect.bottom()])        
+        xyxy = np.round(xyxy).astype(np.int32)
+        block = TextBlock(xyxy)
+        xywh = np.copy(xyxy)
+        xywh[[2, 3]] -= xywh[[0, 1]]
+        block.set_lines_by_xywh(xywh)
+        block.src_is_vertical = self.formatpanel.global_format.vertical
+        blk_item = TextBlkItem(block, len(self.textblk_item_list), set_format=False, show_rect=True)
+        blk_item.set_fontformat(self.formatpanel.global_format)
+        self.canvas.push_undo_command(CreateItemCommand(blk_item, self))
 
     def on_paste2selected_textitems(self):
         blkitems = self.canvas.selected_text_items()

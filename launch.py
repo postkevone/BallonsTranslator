@@ -246,7 +246,7 @@ def main():
         # font database does not initialise on windows with qpa -offscreen:
         # whttps://github.com/dmMaze/BallonsTranslator/issues/519
         from qtpy.QtCore import QStandardPaths
-        font_dir_list = QStandardPaths.standardLocations(QStandardPaths.FontsLocation)
+        font_dir_list = QStandardPaths.standardLocations(QStandardPaths.StandardLocation.FontsLocation)
         for fd in font_dir_list:
             fp_list = find_all_files_recursive(fd, FONT_EXTS)
             for fp in fp_list:
@@ -258,17 +258,15 @@ def main():
         fdb = QFontDatabase()
         shared.FONT_FAMILIES = set(fdb.families())
 
-    yahei = QFont('Microsoft YaHei UI')
-    if yahei.exactMatch() and not sys.platform == 'darwin':
-        QGuiApplication.setFont(yahei)
-        shared.DEFAULT_FONT_FAMILY = 'Microsoft YaHei UI'
-        shared.APP_DEFAULT_FONT = 'Microsoft YaHei UI'
-    else:
-        app_font = app.font().family()
-        shared.DEFAULT_FONT_FAMILY = app_font
-        shared.APP_DEFAULT_FONT = app_font
-
-    shared.APP_DEFAULT_FONT = app.font().defaultFamily()
+    app_font = QFont('Microsoft YaHei UI')
+    if not app_font.exactMatch() or sys.platform == 'darwin':
+        app_font = app.font()
+    app_font.setHintingPreference(QFont.HintingPreference.PreferNoHinting)
+    app_font.setStyleStrategy(QFont.StyleStrategy.PreferAntialias | QFont.StyleStrategy.NoSubpixelAntialias)
+    QGuiApplication.setFont(app_font)
+    shared.DEFAULT_FONT_FAMILY = app_font.family()
+    shared.APP_DEFAULT_FONT = app_font.family()
+    
     if args.ldpi:
         shared.LDPI = args.ldpi
 
@@ -279,11 +277,11 @@ def main():
     BT = ballontrans
     BT.restart_signal.connect(restart)
 
-
     if not args.headless:
         if shared.SCREEN_W > 1707 and sys.platform == 'win32':   # higher than 2560 (1440p) / 1.5
             # https://github.com/dmMaze/BallonsTranslator/issues/220
-            BT.comicTransSplitter.setHandleWidth(10)
+            print(BT.comicTransSplitter.handleWidth())
+            BT.comicTransSplitter.setHandleWidth(7)
 
         ballontrans.setWindowIcon(QIcon(shared.ICON_PATH))
         ballontrans.show()

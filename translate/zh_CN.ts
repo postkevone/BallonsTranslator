@@ -97,77 +97,77 @@
 <context>
     <name>Canvas</name>
     <message>
-        <location filename="../ui/canvas.py" line="763"/>
+        <location filename="../ui/canvas.py" line="769"/>
         <source>Delete</source>
         <translation>删除</translation>
     </message>
     <message>
-        <location filename="../ui/canvas.py" line="774"/>
+        <location filename="../ui/canvas.py" line="780"/>
         <source>Apply font formatting</source>
         <translation>应用字体格式</translation>
     </message>
     <message>
-        <location filename="../ui/canvas.py" line="775"/>
+        <location filename="../ui/canvas.py" line="781"/>
         <source>Auto layout</source>
         <translation>自动排版</translation>
     </message>
     <message>
-        <location filename="../ui/canvas.py" line="759"/>
+        <location filename="../ui/canvas.py" line="765"/>
         <source>Copy</source>
         <translation>复制</translation>
     </message>
     <message>
-        <location filename="../ui/canvas.py" line="761"/>
+        <location filename="../ui/canvas.py" line="767"/>
         <source>Paste</source>
         <translation>粘贴</translation>
     </message>
     <message>
-        <location filename="../ui/canvas.py" line="779"/>
+        <location filename="../ui/canvas.py" line="785"/>
         <source>translate</source>
         <translation>翻译</translation>
     </message>
     <message>
-        <location filename="../ui/canvas.py" line="780"/>
+        <location filename="../ui/canvas.py" line="786"/>
         <source>OCR</source>
         <translation>OCR</translation>
     </message>
     <message>
-        <location filename="../ui/canvas.py" line="781"/>
+        <location filename="../ui/canvas.py" line="787"/>
         <source>OCR and translate</source>
         <translation>OCR并翻译</translation>
     </message>
     <message>
-        <location filename="../ui/canvas.py" line="782"/>
+        <location filename="../ui/canvas.py" line="788"/>
         <source>OCR, translate and inpaint</source>
         <translation>OCR，翻译并抹字</translation>
     </message>
     <message>
-        <location filename="../ui/canvas.py" line="769"/>
+        <location filename="../ui/canvas.py" line="775"/>
         <source>Delete and Recover removed text</source>
         <translation>删除并恢复被抹除文字</translation>
     </message>
     <message>
-        <location filename="../ui/canvas.py" line="776"/>
+        <location filename="../ui/canvas.py" line="782"/>
         <source>Reset Angle</source>
         <translation>角度复位</translation>
     </message>
     <message>
-        <location filename="../ui/canvas.py" line="765"/>
+        <location filename="../ui/canvas.py" line="771"/>
         <source>Copy source text</source>
         <translation>复制原文</translation>
     </message>
     <message>
-        <location filename="../ui/canvas.py" line="767"/>
+        <location filename="../ui/canvas.py" line="773"/>
         <source>Paste source text</source>
         <translation>粘贴原文</translation>
     </message>
     <message>
-        <location filename="../ui/canvas.py" line="783"/>
+        <location filename="../ui/canvas.py" line="789"/>
         <source>inpaint</source>
         <translation>抹字</translation>
     </message>
     <message>
-        <location filename="../ui/canvas.py" line="777"/>
+        <location filename="../ui/canvas.py" line="783"/>
         <source>Squeeze</source>
         <translation>收缩</translation>
     </message>
@@ -854,7 +854,7 @@
     <message>
         <location filename="../ui/mainwindowbars.py" line="104"/>
         <source>Export soure text as TXT</source>
-        <translation>原文导出为 TXT</translation>
+        <translation type="obsolete">原文导出为 TXT</translation>
     </message>
     <message>
         <location filename="../ui/mainwindowbars.py" line="106"/>
@@ -864,7 +864,7 @@
     <message>
         <location filename="../ui/mainwindowbars.py" line="109"/>
         <source>Export soure text as markdown</source>
-        <translation>原文导出为 Markdown</translation>
+        <translation type="obsolete">原文导出为 Markdown</translation>
     </message>
     <message>
         <location filename="../ui/mainwindowbars.py" line="111"/>
@@ -880,6 +880,16 @@
         <location filename="../ui/mainwindowbars.py" line="143"/>
         <source>RUN</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/mainwindowbars.py" line="104"/>
+        <source>Export source text as TXT</source>
+        <translation>原文导出为 TXT</translation>
+    </message>
+    <message>
+        <location filename="../ui/mainwindowbars.py" line="109"/>
+        <source>Export source text as markdown</source>
+        <translation>原文导出为 Markdown</translation>
     </message>
 </context>
 <context>

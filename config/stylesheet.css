@@ -373,6 +373,10 @@ QPushButton {
     border-radius: 4px;
 }
 
+QPushButton#RunButton {
+    font-size: 12px;
+}
+
 NoBorderPushBtn {
     background-color: @noboderPushBtnBackgroundColor;
     border: none;
@@ -453,14 +457,6 @@ QPushButton#closeBtn::hover {
 
 TextCheckerLabel::hover {
     background-color: rgba(30, 147, 229, 20%);
-}
-
-TextCheckerLabel#OCRChecker {
-    height: 34px;
-    width: 66;
-    padding-left: 7px;
-    padding-right: 7px;
-    font-size: 22px;
 }
 
 QCheckBox#TransChecker::indicator {
@@ -559,8 +555,8 @@ QProgressBar {
 }
 
 ShowPageListChecker::indicator{
-    height: 37px;
-    width: 37px;
+    height: 27px;
+    width: 27px;
     image: url(icons/showpagelist.svg);
 }
 
@@ -574,8 +570,8 @@ ShowPageListChecker::indicator:checked
 }
 
 QCheckBox#GlobalSearchChecker::indicator{
-    height: 38px;
-    width: 38px;
+    height: 28px;
+    width: 28px;
     image: url(icons/search.svg);
 }
 
@@ -590,8 +586,8 @@ QCheckBox#GlobalSearchChecker::indicator:checked
 
 
 StateChecker#ImgTransChecker::indicator{
-    height: 37px;
-    width: 37px;
+    height: 27px;
+    width: 27px;
     image: url(icons/leftbar_imgtrans.svg);
 }
 
@@ -606,8 +602,8 @@ StateChecker#ImgTransChecker::indicator:checked
 }
 
 StateChecker#ConfigChecker::indicator{
-    height: 37px;
-    width: 37px;
+    height: 27px;
+    width: 27px;
     image: url(icons/leftbar_config.svg);
 }
 
@@ -619,20 +615,6 @@ StateChecker#ConfigChecker::indicator:checked
 {
     image: url(icons/leftbar_config_activate.svg);
 }
-
-StateChecker#OCRChecker::indicator{
-    height: 28px;
-    width: 28px;
-    image: url(icons/bottombar_ocr.svg);
-}
-
-StateChecker#OCRChecker::indicator:checked{
-    height: 28px;
-    width: 28px;
-    background-color: rgba(30, 147, 229);
-    image: url(icons/bottombar_ocr_activate.svg);
-}
-
 
 QProgressBar::chunk {
     background-color: #b0cbf8;

@@ -140,7 +140,11 @@ class LeftBar(Widget):
         openBtnToolBar.addWidget(self.openBtn)
         
         self.runImgtransBtn = QPushButton()
-        self.runImgtransBtn.setText(self.tr('RUN'))
+        self.runImgtransBtn.setObjectName('RunButton')
+        self.runImgtransBtn.setText(self.tr('Run'))
+        font = self.runImgtransBtn.font()
+        font.setPixelSize(10)
+        self.runImgtransBtn.setFont(font)
         self.runImgtransBtn.setFixedSize(LEFTBTN_WIDTH, LEFTBTN_WIDTH)
         self.run_imgtrans_clicked = self.runImgtransBtn.clicked
         self.runImgtransBtn.setFixedSize(LEFTBTN_WIDTH, LEFTBTN_WIDTH)
@@ -153,9 +157,9 @@ class LeftBar(Widget):
         vlayout.addItem(QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding))
         vlayout.addWidget(self.configChecker)
         vlayout.addWidget(self.runImgtransBtn)
-        vlayout.setContentsMargins(padding, 0, padding, int(LEFTBTN_WIDTH / 2))
+        vlayout.setContentsMargins(padding, LEFTBTN_WIDTH // 2, padding, LEFTBTN_WIDTH // 2)
         vlayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        vlayout.setSpacing(int(LEFTBTN_WIDTH / 2))
+        vlayout.setSpacing(LEFTBTN_WIDTH * 3 // 4)
         self.setGeometry(0, 0, 300, 500)
         self.setMouseTracking(True)
 
