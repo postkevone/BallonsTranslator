@@ -143,7 +143,7 @@ class StariverDetector(TextDetectorBase):
             new_font_size = int(new_font_size * self.font_size_multiplier)
         return new_font_size
 
-    def _detect(self, img: np.ndarray, proj: ProjImgTrans = None) -> Tuple[np.ndarray | List[TextBlock]]:
+    def _detect(self, img: np.ndarray, proj: ProjImgTrans = None) -> Tuple[np.ndarray, List[TextBlock]]:
         self.update_token_if_needed()  # 在向服务器发送请求前尝试更新 Token
         if not self.token or self.token == '':
             self.logger.error(

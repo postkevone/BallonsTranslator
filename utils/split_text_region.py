@@ -227,7 +227,7 @@ def split_textblock(src_img, crop_ratio=0.2, blur=False, show_process=False, dis
     vars = (-1, -1)
     
     if len(bound0) < 2:
-        return [TextSpan(0, height-1)], vars
+        return [TextSpan(0, height-1, 0, width - 1)], vars
 
     base_span = TextSpan(bound0[0], bound0[-1])
     meanby_yaxis = sumby_yaxis.mean()
@@ -304,19 +304,24 @@ def manga_split(img, bbox=None, show_process=False, clip_width=False) -> list[Te
 
     span_list, _ = split_textblock(im, show_process=show_process, shrink=False, recheck=True, discard=False, crop_ratio=0)
     if span_list is None:
-        return bboxes
-    span_list, _ = shrink_span_list(im, span_list, shrink_vert_space=False)
+        return [TextSpan(0, 0, im.shape[1], im.shape[0])]
+    # span_list, _ = shrink_span_list(im, span_list, shrink_vert_space=False)
         
-    for span in span_list:
+    for ii, span in enumerate(span_list):
         left = span.left
         right = span.right
-        span.left = span.top
-        span.right = span.bottom
+        if ii == 0:
+            span.left = 0
+        else:
+            span.left = span.top
+        if ii == len(span_list) - 1:
+            span.right = im.shape[0]
+        else:
+            span.right = span.bottom
         span.top =  imw - right
         span.bottom = imw - left
-        w, h = span.width, span.height
-        span.height = w
-        span.width = h
+        span.height = span.bottom - span.top
+        span.width = span.right - span.left
 
     return span_list
 

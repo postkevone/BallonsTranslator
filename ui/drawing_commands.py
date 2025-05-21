@@ -39,7 +39,7 @@ class StrokeItemUndoCommand(QUndoCommand):
 
 
 class InpaintUndoCommand(QUndoCommand):
-    def __init__(self, canvas: Canvas, inpainted: np.ndarray, mask: np.ndarray, inpaint_rect: List[int]):
+    def __init__(self, canvas: Canvas, inpainted: np.ndarray, mask: np.ndarray, inpaint_rect: List[int], merge_existing_mask=False):
         super().__init__()
         self.canvas = canvas
         img_array = self.canvas.imgtrans_proj.inpainted_array
@@ -49,7 +49,10 @@ class InpaintUndoCommand(QUndoCommand):
         self.undo_img = np.copy(img_view)
         self.undo_mask = np.copy(mask_view)
         self.redo_img = inpainted
-        self.redo_mask = mask
+        if merge_existing_mask:
+            self.redo_mask = np.bitwise_or(mask, mask_view)
+        else:
+            self.redo_mask = mask
         self.inpaint_rect = inpaint_rect
 
     def redo(self) -> None:

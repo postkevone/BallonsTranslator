@@ -155,7 +155,7 @@ Sugoi 翻译器作者: [mingshiba](https://www.patreon.com/mingshiba)
  * 暂时仅支持日文(方块字都差不多)和英文检测，训练代码和说明见https://github.com/dmMaze/comic-text-detector
  * 支持使用 [星河云（团子漫画OCR）](https://cloud.stariver.org.cn/)的文本检测，需要填写用户名和密码，每次启动时会自动登录。
    * 详细说明见 [团子OCR说明](doc/团子OCR说明.md)
- * `YSGDetector` 是由 [lhj5426](https://github.com/lhj5426) 训练的模型，能更好地过滤日漫/CG里的拟声词。需要手动从 [YSGYoloDetector](https://huggingface.co/dreMaz/YSGYoloDetector) 下载模型放到 data/models 目录下。
+ * `YSGDetector` 是由 [lhj5426](https://github.com/lhj5426) 训练的模型，能更好地过滤日漫/CG里的拟声词。需要手动从 [YSGYoloDetector](https://huggingface.co/YSGforMTL/YSGYoloDetector) 下载模型放到 data/models 目录下。
 
 
 ### OCR
@@ -184,6 +184,7 @@ Sugoi 翻译器作者: [mingshiba](https://www.patreon.com/mingshiba)
  * 支持两个版本的 OpenAI 兼容翻译器，支持兼容 OpenAI API 的官方或第三方LLM提供商，需要在设置面板里配置。
    * 无后缀版本token消耗更小，但分句稳定性稍差，长文本翻译可能有问题。
    * exp后缀版本token消耗更大，但稳定性更好，且在Prompt中进行了“越狱”，适合长文本翻译。
+ * [m2m100](https://huggingface.co/facebook/m2m100_1.2B): 下载并将 m2m100-1.2B-ctranslate2 移到 data/models 目录下
 
 其它优秀的离线英文翻译模型请参考[这条讨论](https://github.com/dmMaze/BallonsTranslator/discussions/515)  
 如需添加新的翻译器请参考[加别的翻译器](doc/加别的翻译器.md)，本程序添加新翻译器只需要继承基类实现两个接口即可不需要理会代码其他部分，欢迎大佬提 pr
@@ -193,33 +194,28 @@ Sugoi 翻译器作者: [mingshiba](https://www.patreon.com/mingshiba)
 * 感谢 [bropines](https://github.com/bropines) 提供俄语翻译
 * 第三方输入法可能会造成右侧编辑框显示 bug，见[#76](https://github.com/dmMaze/BallonsTranslator/issues/76)，暂时不打算修
 * 选中文本迷你菜单支持*聚合词典专业划词翻译*[沙拉查词](https://saladict.crimx.com): [安装说明](doc/saladict_chs.md)
-* 启用 AMD（ROCm6）显卡加速步骤
-   * 更新显卡驱动至最新版（建议 24.12.1 及以上）
-   * 下载并安装 [AMD HIP SDK 6.2](https://www.amd.com/en/developer/resources/rocm-hub/hip-sdk.html)
-   * 下载 [ZLUDA](https://github.com/lshqqytiger/ZLUDA/releases)（ROCm6版本）并解压到 zluda 文件夹内
-   * 复制 zluda 文件夹到系统盘下：比如c盘（C:\zluda）
-   * 配置系统环境变量
+<details>
+  <summary><i>启用 AMD（ROCm6）显卡加速步骤</i></summary>
+
+1. 更新显卡驱动至最新版（建议 24.12.1 及以上，下载并安装 [AMD HIP SDK 6.2](https://www.amd.com/en/developer/resources/rocm-hub/hip-sdk.html)  
+2. 下载 [ZLUDA](https://github.com/lshqqytiger/ZLUDA/releases)（ROCm6版本）并解压到 zluda 文件夹内，复制 zluda 文件夹到系统盘下：比如c盘（C:\zluda）  
+3. 配置系统环境变量，以 windows 10 系统为例：设置 - 系统属性 - 高级系统设置 - 环境变量 - 系统变量 - 找到 path 变量，点击编辑，在最后添加 `C:\zluda` 和 `%HIP_PATH_62%bin` 两项  
+4. 替换 CUDA 库的动态链接文件：将 `C:\zluda` 文件夹内的 `cublas.dll` `cusparse.dll` 和 `nvrtc.dll` 复制出一份到桌面，按如下规则重命名复制出来的文件  
+
+**注意：(AMD 驱动 25.5.1 务必更新 ZLUDA 版本到 3.9.5 及以上)**
+
+```
+  原文件名 → 新文件名
+
+  cublas.dll → cublas64_11.dll
+
+  cusparse.dll → cusparse64_11.dll
+
+  nvrtc.dll → nvrtc64_112_0.dll
+```
+  将已经重命名的文件替换掉 `BallonsTranslator\ballontrans_pylibs_win\Lib\site-packages\torch\lib\` 目录中的同名文件
+
+5. 启动程序并设置 OCR 和文本检测 为 Cuda **（图像修复请继续使用 CPU）**
+6. 运行 OCR 并等待 ZLUDA 编译 PTX 文件 **（首次编译大概需要 5-10 分钟，取决于 CPU 性能）**,**下次运行无需编译**
   
-      这里以 windows 10 系统为例：设置 - 系统属性 - 高级系统设置 - 环境变量 - 系统变量 - 找到 path 变量
-  
-      点击编辑 在最后添加 `C:\zluda` 和 `%HIP_PATH_62%bin` 两项
-  
-   * 替换 CUDA 库的动态链接文件
-  
-      将 `C:\zluda` 文件夹内的 `cublas64_11.dll` `cusparse64_11.dll` 和 `nvrtc64_112_0.dll` 复制出一份到桌面
-
-      按如下规则重命名复制出来的文件
-
-      `原文件名` → `新文件名`
-
-      `cublas.dll` → `cublas64_11.dll`
-
-      `cusparse.dll` → `cusparse64_11.dll`
-
-      `nvrtc.dll` → `nvrtc64_112_0.dll`
-    
-      将已经重命名的文件替换掉 `BallonsTranslator\ballontrans_pylibs_win\Lib\site-packages\torch\lib\` 目录中的同名文件
-
-    * 启动程序并设置 OCR 和文本检测 为 Cuda **（图像修复请继续使用 CPU）**
-    * 运行 OCR 并等待 ZLUDA 编译 PTX 文件 **（首次编译大概需要 5-10 分钟，取决于 CPU 性能）**
-    * **下次运行无需编译**
+</details>

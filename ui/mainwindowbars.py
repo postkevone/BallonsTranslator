@@ -273,7 +273,8 @@ class TitleBar(Widget):
 
     def __init__(self, parent, *args, **kwargs) -> None:
         super().__init__(parent, *args, **kwargs)
-
+        if C.ON_MACOS:# https://bugreports.qt.io/browse/QTBUG-133215
+            self.setAttribute(Qt.WidgetAttribute.WA_ContentsMarginsRespectsSafeArea, False)
         self.mainwindow : QMainWindow = parent
         self.mPos: QPoint = None
         self.normalsize = False
