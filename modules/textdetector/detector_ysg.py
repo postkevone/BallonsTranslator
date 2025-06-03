@@ -44,7 +44,7 @@ class YSGYoloDetector(TextDetectorBase):
         'model path': {
             'type': 'selector',
             'options': CKPT_LIST,
-            'value': 'data/models/ysgyolo_v11_x.pt',
+            'value': 'data/models/ysgyolo_S150best.pt',
             'editable': True,
             'flush_btn': True,
             'path_selector': True,
