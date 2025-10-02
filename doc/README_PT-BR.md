@@ -1,6 +1,6 @@
 ## BallonTranslator
 
-[Chinês](/README.md) | [Inglês](/README_EN.md) | pt-BR | [Russo](../doc/README_RU.md) | [Japonês](../doc/README_JA.md) | [Indonésio](../doc/README_ID.md) | [Vietnamita](../doc/README_VI.md) | [한국어](../doc/README_KO.md)
+[Chinês](/README.md) | [Inglês](/README_EN.md) | pt-BR | [Russo](../doc/README_RU.md) | [Japonês](../doc/README_JA.md) | [Indonésio](../doc/README_ID.md) | [Vietnamita](../doc/README_VI.md) | [한국어](../doc/README_KO.md) | [Español](../doc/README_ES.md) | [Français](../doc/README_FR.md)
 
 BallonTranslator é mais uma ferramenta auxiliada por computador, alimentada por deep learning, para a tradução de quadrinhos/mangás.
 
@@ -34,7 +34,7 @@ Baixe o BallonsTranslator_dev_src_with_gitpython.7z do [MEGA](https://mega.nz/fo
 Execute scripts/local_gitpull.bat para obter a atualização mais recente.
 
 ### Executando o código-fonte
-Instale o [Python](https://www.python.org/downloads/release/python-31011) **< 3.12** (não utilize a versão da Microsoft Store) e o [Git](https://git-scm.com/downloads).
+Instale o [Python](https://www.python.org/downloads/release/python-31011) **<= 3.12** (não utilize a versão da Microsoft Store) e o [Git](https://git-scm.com/downloads).
 
 ```bash
 # Clone este repositório

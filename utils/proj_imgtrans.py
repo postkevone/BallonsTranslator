@@ -15,6 +15,25 @@ from . import shared
 from .exceptions import ImgnameNotInProjectException, ProjectLoadFailureException, ProjectDirNotExistException, ProjectNotSupportedException
 
 
+def get_last_modified_file(file_prefix, exts, ext_fallback=None):
+    '''
+    get last modified file from files sharing same prefix
+    '''
+    latest_time = -1
+    latest_f = None
+    for ext in exts:
+        tmp_p = file_prefix + ext
+        if osp.exists(tmp_p) and osp.getmtime(tmp_p) > latest_time:
+            latest_time = osp.getmtime(tmp_p)
+            latest_f = tmp_p
+    if latest_f is None:
+        if ext_fallback is not None:
+            latest_f = file_prefix + ext_fallback
+        else:
+            latest_f = file_prefix + exts[0]
+    return latest_f
+
+
 def write_jpg_metadata(imgpath: str, metadata="a metadata"):
     exif_dict = {"Exif":{piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(metadata, encoding='unicode')}}
     exif_bytes = piexif.dump(exif_dict)
@@ -221,7 +240,7 @@ class ProjImgTrans:
                 raise ImgnameNotInProjectException
             self.current_img = imgname
             img_path = self.current_img_path()
-            mask_path = self.mask_path()
+            mask_path = self.get_mask_path(get_last_modified=True)
             self.img_array = imread(img_path)
             im_h, im_w = self.img_array.shape[:2]
             if osp.exists(mask_path):
@@ -236,6 +255,11 @@ class ProjImgTrans:
             self.img_array = None
             self.mask_array = None
             self.inpainted_array = None
+
+    def current_has_alpha(self):
+        if self.current_img is None:
+            return False
+        return len(self.img_array.shape) and self.img_array.shape[-1] == 4
 
     def set_current_img_byidx(self, idx: int):
         num_pages = self.num_pages
@@ -272,12 +296,21 @@ class ProjImgTrans:
         self.set_current_img_byidx(0)
         self.save()
         
-    def save(self):
+    def save(self, keep_exist_as_backup=False):
         if not osp.exists(self.directory):
             raise ProjectDirNotExistException
-        with open(self.proj_path, "w", encoding="utf-8") as f:
-            f.write(json.dumps(self.to_dict(), ensure_ascii=False, cls=TextBlkEncoder))
-            LOGGER.debug(f'project saved to {self.proj_path}')
+        tmp_save_tgt = self.proj_path + '.tmp'
+        try:
+            with open(tmp_save_tgt, "w", encoding="utf-8") as f:
+                f.write(json.dumps(self.to_dict(), ensure_ascii=False, cls=TextBlkEncoder))
+        except:
+            raise Exception(f'Failed to write {self.to_dict()}')
+        if osp.exists(self.proj_path) and keep_exist_as_backup:
+            os.replace(self.proj_path, self.proj_path + '.backup')
+            os.replace(tmp_save_tgt, self.proj_path)
+        else:
+            os.replace(tmp_save_tgt, self.proj_path)
+        LOGGER.debug(f'project saved to {self.proj_path}')
 
     def to_dict(self) -> Dict:
         pages = self.pages.copy()
@@ -294,42 +327,45 @@ class ProjImgTrans:
         return imread(osp.join(self.directory, imgname))
 
     def save_mask(self, img_name, mask: np.ndarray):
-        imwrite(self.get_mask_path(img_name), mask)
+        imwrite(self.get_mask_path(img_name), mask, ext=pcfg.intermediate_imgsave_ext)
 
     def save_inpainted(self, img_name, inpainted: np.ndarray):
-        imwrite(self.get_inpainted_path(img_name), inpainted)
+        imwrite(self.get_inpainted_path(img_name), inpainted, ext=pcfg.intermediate_imgsave_ext)
 
     def current_img_path(self) -> str:
         if self.current_img is None:
             return None
         return osp.join(self.directory, self.current_img)
 
-    def mask_path(self) -> str:
-        if self.current_img is None:
-            return None
-        return self.get_mask_path(self.current_img)
-
-    def inpainted_path(self) -> str:
-        if self.current_img is None:
-            return None
-        return self.get_inpainted_path(self.current_img)
-
-    def get_mask_path(self, imgname: str = None) -> str:
+    def get_mask_path(self, imgname: str = None, get_last_modified=False) -> str:
         if imgname is None:
             imgname = self.current_img
-        return osp.join(self.mask_dir(), osp.splitext(imgname)[0]+'.png')
+
+        fileprefix = osp.join(self.mask_dir(), osp.splitext(imgname)[0])
+        if get_last_modified:
+            p = get_last_modified_file(fileprefix, ['.jxl', '.png'], ext_fallback=pcfg.intermediate_imgsave_ext)
+        else:
+            p = fileprefix+pcfg.intermediate_imgsave_ext
+
+        return p
     
     def load_mask_by_imgname(self, imgname: str) -> np.ndarray:
         mask = None
-        mp = self.get_mask_path(imgname)
+        mp = self.get_mask_path(imgname, get_last_modified=True)
         if osp.exists(mp):
             mask = imread(mp, cv2.IMREAD_GRAYSCALE)
         return mask
 
-    def get_inpainted_path(self, imgname: str = None) -> str:
+    def get_inpainted_path(self, imgname: str = None, get_last_modified=False) -> str:
         if imgname is None:
             imgname = self.current_img
-        p = osp.join(self.inpainted_dir(), osp.splitext(imgname)[0]+'.png')
+
+        fileprefix = osp.join(self.inpainted_dir(), osp.splitext(imgname)[0])
+        if get_last_modified:
+            p = get_last_modified_file(fileprefix, ['.jxl', '.png'], ext_fallback=pcfg.intermediate_imgsave_ext)
+        else:
+            p = fileprefix+pcfg.intermediate_imgsave_ext
+
         if not osp.exists(p) and shared.FUZZY_MATCH_IMAGE_NAME:
             if self._fuzzy_inpainted_list is None:
                 if osp.exists(self.inpainted_dir()):
@@ -343,7 +379,7 @@ class ProjImgTrans:
     
     def load_inpainted_by_imgname(self, imgname: str, scale_to_src: bool = True) -> np.ndarray:
         inpainted = None
-        mp = self.get_inpainted_path(imgname)
+        mp = self.get_inpainted_path(imgname, get_last_modified=True)
         if mp is not None and osp.exists(mp):
             inpainted = imread(mp)
             if imgname == self.current_img and self.img_array is not None:
@@ -360,7 +396,7 @@ class ProjImgTrans:
     def get_result_path(self, imgname: str) -> str:
         ext = '.png'
         if pcfg is not None:
-            if pcfg.imgsave_ext not in {'.jpg', '.png', '.webp'}:
+            if pcfg.imgsave_ext not in {'.jpg', '.png', '.webp', '.jxl'}:
                 LOGGER.warning('invalid image saving ext in config.json')
             else:
                 ext = pcfg.imgsave_ext

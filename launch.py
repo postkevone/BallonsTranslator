@@ -5,7 +5,6 @@ import os.path as osp
 import os
 import importlib
 import subprocess
-import pkg_resources
 from platform import platform
 
 BRANCH = 'dev'
@@ -45,8 +44,9 @@ parser.add_argument("--ldpi", default=None, type=float, help='logical dots perin
 parser.add_argument("--export-translation-txt", action='store_true', help='save translation to txt file once RUN completed')
 parser.add_argument("--export-source-txt", action='store_true', help='save source to txt file once RUN completed')
 parser.add_argument("--frozen", action='store_true', help='run without checking requirements')
-parser.add_argument("--update", action='store_true', help="Update the repository before launching") # Добавлен аргумент --update
+parser.add_argument("--update", action='store_true', help="Update the repository before launching") # Add argument --update
 parser.add_argument("--config_path", default=shared.CONFIG_PATH, help='Config file to use for translation') # Named config_path to avoid conflict with existing name config
+parser.add_argument('--nightly', action='store_true', help="Enable AMD Nightly ROCm")
 args, _ = parser.parse_known_args()
 
 
@@ -199,18 +199,13 @@ def main():
         shared.FLAG_QT6 = True
     else:
         shared.FLAG_QT6 = False
-        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True) #enable highdpi scaling
-        QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True) #use highdpi icons
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True) #enable high dpi scaling
+        QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True) #use high dpi icons
         QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
 
     os.chdir(shared.PROGRAM_PATH)
 
     setup_logging(shared.LOGGING_PATH)
-
-    from modules.base import load_modules
-    from modules.prepare_local_files import prepare_local_files_forall
-    load_modules()
-    prepare_local_files_forall()
 
     app_args = sys.argv
     if args.headless:
@@ -218,6 +213,13 @@ def main():
     app = QApplication(app_args)
     app.setApplicationName('BalloonsTranslator')
     app.setApplicationVersion(VERSION)
+
+    # import msl.loadlib (required by translators/trans_eztrans) before init QApplication
+    # yield QWindowsContext: OleInitialize() failed on py3.10, 
+    from modules.base import init_module_registries
+    from modules.prepare_local_files import prepare_local_files_forall
+    init_module_registries()
+    prepare_local_files_forall()
 
     if not args.headless:
         ps = QGuiApplication.primaryScreen()
@@ -288,7 +290,48 @@ def main():
         ballontrans.resetStyleSheet()
     sys.exit(app.exec())
 
+def is_amd_gpu():
+    try:
+        if sys.platform == 'win32':
+            # Windows: use wmic
+            cmd = 'wmic path win32_VideoController get name'
+            output = subprocess.check_output(cmd, shell=True, text=True, stderr=subprocess.DEVNULL)
+            return any(keyword in output for keyword in ["AMD", "Radeon"])
+
+        else:
+            return False
+
+    except Exception:
+        return False
+
+def supported_amd_nightly_gpu():
+    try:
+        if sys.platform == 'win32':
+            # Windows: use wmic
+            cmd = 'wmic path win32_VideoController get name'
+            output = subprocess.check_output(cmd, shell=True, text=True, stderr=subprocess.DEVNULL)
+
+            if any(keyword in output for keyword in
+                   ["RX 7900", "RX 7800", "RX 7700", "RX 7600", "PRO W7900", "PRO W7800", "PRO W7700"]):
+                return "RDNA3"
+            if any(keyword in output for keyword in
+                   ["RX 9070", "RX 9060"]):
+                return "RDNA4"
+        else:
+            return "None"
+
+    except Exception:
+        return "None"
+
 def prepare_environment():
+
+    try:
+        import packaging
+    except ModuleNotFoundError:
+        run_pip(f"install packaging", "install packaging")
+
+    from utils.package import check_req_file, check_reqs
+
     if getattr(sys, 'frozen', False):
         print('Running as app, skip dependency installation')
         return
@@ -299,25 +342,42 @@ def prepare_environment():
     req_updated = False
     if sys.platform == 'win32':
         for req in REQ_WIN:
-            try:
-                pkg_resources.require(req)
-            except Exception:
+            if not check_reqs([req]):
                 run_pip(f"install {req}", req)
                 req_updated = True
-    torch_command = os.environ.get('TORCH_COMMAND', "pip install torch==2.2.2 torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cu118 --disable-pip-version-check")
+
+    if is_amd_gpu():
+        print('AMD GPU: Yes')
+        if args.nightly:
+            amd_nightly_gpu = supported_amd_nightly_gpu()
+            if amd_nightly_gpu == "None":
+                Exception("No AMD Nightly GPU supported")
+            if amd_nightly_gpu == "RDNA3":
+                torch_command = os.environ.get('TORCH_COMMAND',
+                                               "pip install rocm==7.0.0rc20250818 rocm-sdk-core==7.0.0rc20250818 rocm-sdk-libraries-gfx110X-dgpu==7.0.0rc20250818 torch==2.9.0a0+rocm7.0.0rc20250818 torchvision==0.24.0a0+rocm7.0.0rc20250818 --index-url https://d2awnip2yjpvqn.cloudfront.net/v2/gfx110X-dgpu/ intel-openmp==2025.1.1 --extra-index-url https://pypi.org/simple --disable-pip-version-check")
+            if amd_nightly_gpu == "RDNA4":
+                torch_command = os.environ.get('TORCH_COMMAND',
+                                               "pip install rocm==7.0.0rc20250817 rocm-sdk-core==7.0.0rc20250817 rocm-sdk-libraries-gfx120X-all==7.0.0rc20250817 torch==2.9.0a0+rocm7.0.0rc20250817 torchvision==0.24.0a0+rocm7.0.0rc20250817 --index-url https://d2awnip2yjpvqn.cloudfront.net/v2/gfx120X-all/ intel-openmp==2025.1.1 --extra-index-url https://pypi.org/simple --disable-pip-version-check")
+        else:
+            # AMD GPU: Cuda 11.8, Pytorch 2.2.2
+            torch_command = os.environ.get('TORCH_COMMAND', "pip install torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 --index-url https://download.pytorch.org/whl/cu118 --disable-pip-version-check")
+    else:
+        torch_command = os.environ.get('TORCH_COMMAND', "pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 --disable-pip-version-check")
     if args.reinstall_torch or not is_installed("torch") or not is_installed("torchvision"):
         run(f'"{python}" -m {torch_command}', "Installing torch and torchvision", "Couldn't install torch", live=True)
         req_updated = True
-    try:
-        pkg_resources.require(open(args.requirements,mode='r', encoding='utf8'))
-    except Exception as e:
-        print(e)
+
+    if not check_req_file(args.requirements):
         run_pip(f"install -r {args.requirements}", "requirements")
         req_updated = True
 
     if req_updated:
         import site
         importlib.reload(site)
+
+
+
+
 
 if __name__ == '__main__':
     main()

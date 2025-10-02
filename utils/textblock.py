@@ -298,16 +298,18 @@ class TextBlock:
         xyxy = np.array(self.xyxy)
         return (xyxy[:2] + xyxy[2:]) / 2
 
-    def unrotated_polygons(self) -> np.ndarray:
+    def unrotated_polygons(self, ids=None) -> np.ndarray:
         angled = self.angle != 0
         center = self.center()
         polygons = self.lines_array().reshape(-1, 8)
+        if ids is not None:
+            polygons = polygons[ids]
         if angled:
             polygons = rotate_polygons(center, polygons, self.angle)
         return angled, center, polygons
     
-    def min_rect(self, rotate_back=True) -> List[int]:
-        angled, center, polygons = self.unrotated_polygons()
+    def min_rect(self, rotate_back=True, ids=None) -> List[int]:
+        angled, center, polygons = self.unrotated_polygons(ids=ids)
         min_x = polygons[:, ::2].min()
         min_y = polygons[:, 1::2].min()
         max_x = polygons[:, ::2].max()
@@ -576,10 +578,7 @@ def examine_textblk(blk: TextBlock, im_w: int, im_h: int, sort: bool = False) ->
     v = np.sum(vec_v, axis=0)
     h = np.sum(vec_h, axis=0)
     norm_v, norm_h = np.linalg.norm(v), np.linalg.norm(h)
-    if blk.language == 'ja':
-        vertical = norm_v > norm_h
-    else:
-        vertical = norm_v > norm_h * 2
+    vertical = blk.src_is_vertical
     # calcuate distance between textlines and origin 
     if vertical:
         primary_vec, primary_norm = v, norm_v
@@ -602,13 +601,12 @@ def examine_textblk(blk: TextBlock, im_w: int, im_h: int, sort: bool = False) ->
     if abs(blk.angle) < 3:
         blk.angle = 0
     blk.font_size = font_size
-    blk.vertical = blk.src_is_vertical = vertical
     blk.vec = primary_vec
     blk.norm = primary_norm
     if sort:
         blk.sort_lines()
 
-def try_merge_textline(blk: TextBlock, blk2: TextBlock, fntsize_tol=1.7, distance_tol=2) -> bool:
+def try_merge_textline(blk: TextBlock, blk2: TextBlock, fntsize_tol=1.7, distance_tol=2, canvas=None) -> bool:
     if blk2.merged:
         return False
     fntsize_div = blk.font_size / blk2.font_size
@@ -619,20 +617,35 @@ def try_merge_textline(blk: TextBlock, blk2: TextBlock, fntsize_tol=1.7, distanc
     cos_vec = vec_prod / blk.norm / blk2.norm
     # distance = blk2.distance[-1] - blk.distance[-1]
     # distance_p1 = np.linalg.norm(np.array(blk2.lines[-1][0]) - np.array(blk.lines[-1][0]))
-    minrect1 = blk.min_rect()[0]
+    minrect1 = blk.min_rect(ids=[-1])[0]
     xyxy1 = [*minrect1[0], *minrect1[2]]
-    minrect2 = blk2.min_rect()[0]
+    minrect2 = blk2.min_rect(ids=[0])[0]
     xyxy2 = [*minrect2[0], *minrect2[2]]
     distance_x = max(xyxy1[0], xyxy2[0]) - min(xyxy1[2], xyxy2[2])
     distance_y = max(xyxy1[1], xyxy2[1]) - min(xyxy1[3], xyxy2[3])
+    w1 = xyxy1[2] - xyxy1[0]
+    w2 = xyxy2[2] - xyxy2[0]
+    h1 = xyxy1[3] - xyxy1[1]
+    h2 = xyxy2[3] - xyxy2[1] 
 
-    l1, l2 = Polygon(blk.lines[-1]), Polygon(blk2.lines[-1])
+    l1, l2 = Polygon(blk.lines[-1]), Polygon(blk2.lines[0])
     if not l1.intersects(l2):
         if blk.vertical:
             if distance_y > 0:
                 return False
+            if distance_x > fntsz_avg * 0.8:
+                return False
+            if abs(distance_y) / min(h1, h2) < 0.4:
+                return False
         else:
             if distance_x > 0:
+                return False
+            fntsz_thr = 0.5
+            if fntsz_avg < 24:
+                fntsz_thr = 0.6
+            if distance_y > fntsz_avg * fntsz_thr:
+                return False
+            if abs(distance_x) / min(w1, w2) < 0.3:
                 return False
         if fntsize_div > fntsize_tol or 1 / fntsize_div > fntsize_tol:
             return False
@@ -640,10 +653,7 @@ def try_merge_textline(blk: TextBlock, blk2: TextBlock, fntsize_tol=1.7, distanc
             return False
         # if distance > distance_tol * fntsz_avg:
         #     return False
-        if blk.vertical and blk2.vertical and distance_x > fntsz_avg * 1.5:
-            return False
-        if not blk.vertical and distance_y > fntsz_avg * 0.3:
-            return False
+
     # merge
     for line in blk2.lines:
         blk.lines.append(line)
@@ -657,16 +667,15 @@ def try_merge_textline(blk: TextBlock, blk2: TextBlock, fntsize_tol=1.7, distanc
     blk2.merged = True
     return True
 
-def merge_textlines(blk_list: List[TextBlock]) -> List[TextBlock]:
+def merge_textlines(blk_list: List[TextBlock], canvas=None, fntsize_tol=1.7) -> List[TextBlock]:
     if len(blk_list) < 2:
         return blk_list
-    blk_list.sort(key=lambda blk: blk.distance[0])
     merged_list = []
     for ii, current_blk in enumerate(blk_list):
         if current_blk.merged:
             continue
         for jj, blk in enumerate(blk_list[ii+1:]):
-            try_merge_textline(current_blk, blk)
+            try_merge_textline(current_blk, blk, canvas=canvas, fntsize_tol=fntsize_tol)
         merged_list.append(current_blk)
     for blk in merged_list:
         blk.adjust_bbox(with_bbox=False)
@@ -703,7 +712,7 @@ def split_textblk(blk: TextBlock):
             current_blk.adjust_bbox(with_bbox=False)
     return textblock_splitted, sub_blk_list
 
-def group_output(blks, lines, im_w, im_h, mask=None, sort_blklist=True) -> List[TextBlock]:
+def group_output(blks, lines, im_w, im_h, mask=None, sort_blklist=True, canvas=None) -> List[TextBlock]:
     blk_list: List[TextBlock] = []
     scattered_lines = {'ver': [], 'hor': []}
     for bbox, cls, conf in zip(*blks):
@@ -733,6 +742,7 @@ def group_output(blks, lines, im_w, im_h, mask=None, sort_blklist=True) -> List[
                 if mask_score < mask_score_thresh:
                     continue
             blk = TextBlock([bx1, by1, bx2, by2], [line])
+            blk.vertical = blk.src_is_vertical = is_vertical
             examine_textblk(blk, im_w, im_h, sort=False)
             if blk.vertical:
                 scattered_lines['ver'].append(blk)
@@ -762,10 +772,10 @@ def group_output(blks, lines, im_w, im_h, mask=None, sort_blklist=True) -> List[
                 textblock_splitted = True
             elif blk.vertical:
                 textblock_splitted = True
-        if textblock_splitted:
-            textblock_splitted, sub_blk_list = split_textblk(blk)
-        else:
-            sub_blk_list = [blk]
+        # if textblock_splitted:
+        #     textblock_splitted, sub_blk_list = split_textblk(blk)
+        # else:
+        sub_blk_list = [blk]
         # modify textblock to fit its textlines
         if not textblock_splitted:
             for blk in sub_blk_list:
@@ -779,8 +789,13 @@ def group_output(blks, lines, im_w, im_h, mask=None, sort_blklist=True) -> List[
         else:
             _final_blk_list.append(blk)
     final_blk_list = _final_blk_list
+
     # step3: merge scattered lines, sort textblocks by "grid"
-    final_blk_list += merge_textlines(scattered_lines['hor'])
+    scattered_lines['ver'].sort(key=lambda blk: blk.center()[0], reverse=True)
+    scattered_lines['hor'].sort(key=lambda blk: blk.center()[1])
+    # c = visualize_textblocks(canvas, scattered_lines['hor'])
+    # cv2.imwrite('local_tst.jpg', c)
+    final_blk_list += merge_textlines(scattered_lines['hor'], canvas=canvas, fntsize_tol=2.0)
     final_blk_list += merge_textlines(scattered_lines['ver'])
     if sort_blklist:
         final_blk_list = sort_regions(final_blk_list, )
@@ -831,7 +846,7 @@ def visualize_textblocks(canvas, blk_list:  List[TextBlock]):
         cv2.polylines(canvas, [blk.min_rect()], True, (127,127,0), 2)
         center = [int((bx1 + bx2)/2), int((by1 + by2)/2)]
         cv2.putText(canvas, str(blk.angle), center, cv2.FONT_HERSHEY_SIMPLEX, 1, (127,127,255), 2)
-        cv2.putText(canvas, str(ii), (bx1, by1 + lw + 2), 0, lw / 3, (255,127,127), max(lw-1, 1), cv2.LINE_AA)
+        cv2.putText(canvas, str(ii), (bx1, by1 + lw + 2), 0, lw / 6, (255,127,127), max(lw-7, 1), cv2.LINE_AA)
     return canvas
 
 def collect_textblock_regions(img: np.ndarray, textblk_lst: List[TextBlock], text_height=48, maxwidth=8100, split_textblk = False, seg_func: Callable = None):
